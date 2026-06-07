@@ -52,6 +52,23 @@ export const NavigationItems: NavigationItem[] = [
         breadcrumbs: false
       }]
   },
+  {
+    id: 'product',
+    title: 'Products',
+    type: 'group',
+    icon: 'icon-product',
+    children: [
+      {
+        id: 'products',
+        title: 'Products',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/products',
+        icon: 'product',
+        breadcrumbs: false
+      }
+    ]
+  },
   // {
   //   id: 'authentication',
   //   title: 'Authentication',
@@ -80,65 +97,65 @@ export const NavigationItems: NavigationItem[] = [
   //     }
   //   ]
   // },
-  {
-    id: 'utilities',
-    title: 'UI Components',
-    type: 'group',
-    icon: 'icon-navigation',
-    children: [
-      {
-        id: 'typography',
-        title: 'Typography',
-        type: 'item',
-        classes: 'nav-item',
-        url: '/typography',
-        icon: 'font-size'
-      },
-      {
-        id: 'color',
-        title: 'Colors',
-        type: 'item',
-        classes: 'nav-item',
-        url: '/color',
-        icon: 'bg-colors'
-      },
-      {
-        id: 'ant-icons',
-        title: 'Ant Icons',
-        type: 'item',
-        classes: 'nav-item',
-        url: 'https://ant.design/components/icon',
-        icon: 'ant-design',
-        target: true,
-        external: true
-      }
-    ]
-  },
+  // {
+  //   id: 'utilities',
+  //   title: 'UI Components',
+  //   type: 'group',
+  //   icon: 'icon-navigation',
+  //   children: [
+  //     {
+  //       id: 'typography',
+  //       title: 'Typography',
+  //       type: 'item',
+  //       classes: 'nav-item',
+  //       url: '/typography',
+  //       icon: 'font-size'
+  //     },
+  //     {
+  //       id: 'color',
+  //       title: 'Colors',
+  //       type: 'item',
+  //       classes: 'nav-item',
+  //       url: '/color',
+  //       icon: 'bg-colors'
+  //     },
+  //     {
+  //       id: 'ant-icons',
+  //       title: 'Ant Icons',
+  //       type: 'item',
+  //       classes: 'nav-item',
+  //       url: 'https://ant.design/components/icon',
+  //       icon: 'ant-design',
+  //       target: true,
+  //       external: true
+  //     }
+  //   ]
+  // },
 
-  {
-    id: 'other',
-    title: 'Other',
-    type: 'group',
-    icon: 'icon-navigation',
-    children: [
-      {
-        id: 'sample-page',
-        title: 'Sample Page',
-        type: 'item',
-        url: '/sample-page',
-        classes: 'nav-item',
-        icon: 'chrome'
-      },
-      {
-        id: 'document',
-        title: 'Document',
-        type: 'item',
-        classes: 'nav-item',
-        url: 'https://codedthemes.gitbook.io/mantis-angular/',
-        icon: 'question',
-        target: true,
-        external: true
-      }
-    ]
-  }
+  // {
+  //   id: 'other',
+  //   title: 'Other',
+  //   type: 'group',
+  //   icon: 'icon-navigation',
+  //   children: [
+  //     {
+  //       id: 'sample-page',
+  //       title: 'Sample Page',
+  //       type: 'item',
+  //       url: '/sample-page',
+  //       classes: 'nav-item',
+  //       icon: 'chrome'
+  //     },
+  //     {
+  //       id: 'document',
+  //       title: 'Document',
+  //       type: 'item',
+  //       classes: 'nav-item',
+  //       url: 'https://codedthemes.gitbook.io/mantis-angular/',
+  //       icon: 'question',
+  //       target: true,
+  //       external: true
+  //     }
+  //   ]
+  // }
 ];

@@ -28,6 +28,16 @@ const routes: Routes = [
         loadComponent: () => import('./features/users/user-list/user-list.component').then((c) => c.UserListComponent),
         canActivate: [authGuard]
       },
+      {
+        path: 'products',
+        loadComponent: () => import('./features/products/product-list/product-list.component').then((c) => c.ProductListComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'products/create',
+        loadComponent: () => import('./features/products/product-form/product-form.component').then((c) => c.ProductFormComponent),
+        canActivate: [authGuard]
+      },
     ]
   },
   {

@@ -1,0 +1,82 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Add Product</h5>
+    <a routerLink="/products" class="btn btn-outline-secondary btn-sm">Back to List</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+        <div class="form-group mb-3">
+          <label class="form-label" for="name">Name</label>
+          <input
+            type="text"
+            id="name"
+            class="form-control"
+            placeholder="Product name"
+            formControlName="name"
+            [class.is-invalid]="f.name.invalid && (f.name.touched || submitted)"
+          />
+
+          @if (f.name.invalid && (f.name.touched || submitted)) {
+            <div class="invalid-feedback">
+              @if (f.name.errors?.['required']) {
+                <div>Name is required.</div>
+              }
+              @if (f.name.errors?.['maxlength']) {
+                <div>Name must be at most 100 characters.</div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="type">Type</label>
+          <select
+            id="type"
+            class="form-select"
+            formControlName="type"
+            [class.is-invalid]="f.type.invalid && (f.type.touched || submitted)"
+          >
+            @for (type of productTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+
+          @if (f.type.invalid && (f.type.touched || submitted)) {
+            <div class="invalid-feedback">Type is required.</div>
+          }
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="unit">Unit</label>
+          <select
+            id="unit"
+            class="form-select"
+            formControlName="unit"
+            [class.is-invalid]="f.unit.invalid && (f.unit.touched || submitted)"
+          >
+            @for (unit of productUnits; track unit) {
+              <option [value]="unit">{{ unit }}</option>
+            }
+          </select>
+
+          @if (f.unit.invalid && (f.unit.touched || submitted)) {
+            <div class="invalid-feedback">Unit is required.</div>
+          }
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+        }
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Create Product' }}
+          </button>
+          <a routerLink="/products" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

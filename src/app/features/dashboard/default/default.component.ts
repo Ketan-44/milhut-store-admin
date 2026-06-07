@@ -3,7 +3,6 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 // project import
-import tableData from 'src/fake-data/default-data.json';
 
 import { MonthlyBarChartComponent } from 'src/app/theme/shared/apexchart/monthly-bar-chart/monthly-bar-chart.component';
 import { IncomeOverviewChartComponent } from 'src/app/theme/shared/apexchart/income-overview-chart/income-overview-chart.component';
@@ -36,8 +35,6 @@ export class DefaultComponent {
   constructor() {
     this.iconService.addIcon(...[RiseOutline, FallOutline, SettingOutline, GiftOutline, MessageOutline]);
   }
-
-  recentOrder = tableData;
 
   AnalyticEcommerce = [
     {
