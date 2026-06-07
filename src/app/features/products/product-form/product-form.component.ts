@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { ProductType } from '../models/product-type.enum';
 import { ProductUnit } from '../models/product-unit.enum';
 import { ProductService } from '../services/product.service';
@@ -15,6 +16,7 @@ export class ProductFormComponent {
   private fb = inject(FormBuilder);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private toastr = inject(ToastrService);
 
   productTypes = Object.values(ProductType);
   productUnits = Object.values(ProductUnit);
@@ -48,11 +50,13 @@ export class ProductFormComponent {
     this.productService.create(payload).subscribe({
       next: () => {
         this.saving = false;
+        this.toastr.success('Product created successfully.', 'Success');
         this.router.navigate(['/products']);
       },
       error: (error) => {
         this.saving = false;
         this.errorMessage = error.message ?? 'Failed to create product.';
+        this.toastr.error(this.errorMessage, 'Error');
       },
     });
   }

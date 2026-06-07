@@ -1,0 +1,65 @@
+.inventory-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.inventory-table {
+  min-width: 1100px;
+  margin-bottom: 0;
+}
+
+.inventory-table th,
+.inventory-table td {
+  vertical-align: middle;
+}
+
+.col-batch-no {
+  min-width: 170px;
+  white-space: nowrap;
+}
+
+.col-product {
+  min-width: 140px;
+}
+
+.col-type {
+  min-width: 110px;
+  white-space: nowrap;
+}
+
+.col-quantity {
+  min-width: 110px;
+  white-space: nowrap;
+}
+
+.col-expiry {
+  min-width: 130px;
+  white-space: nowrap;
+}
+
+.col-qr-code {
+  min-width: 220px;
+  max-width: 280px;
+  word-break: break-all;
+}
+
+.col-status {
+  min-width: 110px;
+  white-space: nowrap;
+}
+
+.col-actions {
+  min-width: 220px;
+  white-space: nowrap;
+}
+
+.inventory-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.inventory-actions .btn {
+  white-space: nowrap;
+}

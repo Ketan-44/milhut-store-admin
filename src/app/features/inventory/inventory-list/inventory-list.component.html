@@ -9,24 +9,24 @@
   }
 
   <div class="card tbl-card">
-    <div class="table-responsive">
+    <div class="table-responsive inventory-table-wrapper">
       @if (inventoryResource.isLoading()) {
         <div class="p-4 text-muted">Loading inventory...</div>
       } @else if (inventoryResource.error()) {
         <div class="p-4 text-danger">Failed to load inventory.</div>
       } @else if (inventoryResource.hasValue()) {
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 inventory-table">
           <thead>
             <tr>
-              <th>Batch No.</th>
-              <th>Product</th>
-              <th>Type</th>
-              <th>Quantity</th>
-              <th>Remaining</th>
-              <th>Expiry</th>
-              <th>QR Code</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
+              <th class="col-batch-no">Batch No.</th>
+              <th class="col-product">Product</th>
+              <th class="col-type">Type</th>
+              <th class="col-quantity">Quantity</th>
+              <th class="col-quantity">Remaining</th>
+              <th class="col-expiry">Expiry</th>
+              <th class="col-qr-code">QR Code</th>
+              <th class="col-status">Status</th>
+              <th class="col-actions text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -55,8 +55,10 @@
                     )
                   }}
                 </td>
-                <td>{{ batch.expiryDate | date: 'mediumDate' }}</td>
-                <td>{{ batch.qrCode ?? '—' }}</td>
+                <td class="text-nowrap">{{ batch.expiryDate | date: 'mediumDate' }}</td>
+                <td class="col-qr-code" [title]="batch.qrCode ?? ''">
+                  {{ batch.qrCode ?? '—' }}
+                </td>
                 <td>
                   @if (isExpired(batch.expiryDate)) {
                     <span class="badge text-bg-danger">Expired</span>
@@ -66,8 +68,8 @@
                     <span class="badge text-bg-success">Available</span>
                   }
                 </td>
-                <td class="text-end">
-                  <div class="d-inline-flex gap-2">
+                <td class="col-actions text-end">
+                  <div class="inventory-actions">
                     @if (batch.qrCode) {
                       <button
                         type="button"

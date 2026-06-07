@@ -5,19 +5,20 @@ import {
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { Auth } from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 export const responseInterceptor: HttpInterceptorFn = (
     req,
     next
 ) => {
     const router = inject(Router);
+    const authService = inject(AuthService);
 
     return next(req).pipe(
         catchError((error: HttpErrorResponse) => {
             switch (error.status) {
                 case 401:
-                    localStorage.removeItem(Auth.ACCESS_TOKEN);
+                    authService.clearSession();
                     router.navigate(['/login']);
                     break;
 

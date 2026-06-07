@@ -1,7 +1,8 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+import { finalize, firstValueFrom, forkJoin, Subscription } from 'rxjs';
 import { BatchType } from '../models/batch-type.enum';
 import { Inventory } from '../models/inventory.model';
 import { InventoryService } from '../services/inventory.service';
@@ -26,6 +27,7 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   private inventoryService = inject(InventoryService);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private toastr = inject(ToastrService);
   private subscriptions = new Subscription();
 
   products: Product[] = [];
@@ -183,18 +185,23 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     return `Available in parent batch: ${available} ${parentProduct.unit.toLowerCase()}`;
   }
 
-  async ngOnInit(): Promise<void> {
-    try {
-      const [productResponse, inventoryResponse] = await Promise.all([
-        firstValueFrom(this.productService.get()),
-        firstValueFrom(this.inventoryService.get()),
-      ]);
-
-      this.products = productResponse.data;
-      this.parentBatches = inventoryResponse.data;
-    } finally {
-      this.loading = false;
-    }
+  ngOnInit(): void {
+    this.subscriptions.add(
+      forkJoin({
+        productResponse: this.productService.get(),
+        inventoryResponse: this.inventoryService.get(),
+      })
+        .pipe(finalize(() => (this.loading = false)))
+        .subscribe({
+          next: ({ productResponse, inventoryResponse }) => {
+            this.products = productResponse.data;
+            this.parentBatches = inventoryResponse.data;
+          },
+          error: (error) => {
+            console.error(error);
+          },
+        }),
+    );
 
     this.subscriptions.add(
       this.inventoryForm.controls.productId.valueChanges.subscribe(() => {
@@ -238,11 +245,13 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     this.inventoryService.create(payload).subscribe({
       next: () => {
         this.saving = false;
+        this.toastr.success('Inventory batch created successfully.', 'Success');
         this.router.navigate(['/inventory']);
       },
       error: (error) => {
         this.saving = false;
         this.errorMessage = error.message ?? 'Failed to create inventory batch.';
+        this.toastr.error(this.errorMessage, 'Error');
       },
     });
   }

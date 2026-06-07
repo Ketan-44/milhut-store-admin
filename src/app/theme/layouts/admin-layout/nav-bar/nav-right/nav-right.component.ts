@@ -1,11 +1,12 @@
 // angular import
-import { Component, output, inject, input } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 // project import
 import { SharedModule } from 'src/app/theme/shared/shared.module';
-
-// third party
+import { Role } from 'src/app/theme/shared/enums/role.enum';
+import { AuthService } from 'src/app/theme/shared/services/auth.service';
 
 // icon
 import { IconService } from '@ant-design/icons-angular';
@@ -32,12 +33,15 @@ import {
 
 @Component({
   selector: 'app-nav-right',
-  imports: [SharedModule, RouterModule],
+  imports: [SharedModule, RouterModule, TitleCasePipe],
   templateUrl: './nav-right.component.html',
   styleUrls: ['./nav-right.component.scss']
 })
 export class NavRightComponent {
   private iconService = inject(IconService);
+  private authService = inject(AuthService);
+
+  user = this.authService.user;
 
   // public props
   styleSelectorToggle = input<boolean>();
@@ -73,6 +77,14 @@ export class NavRightComponent {
         UnorderedListOutline
       ]
     );
+  }
+
+  getRoleName(role?: number): string {
+    if (role === undefined) {
+      return 'User';
+    }
+
+    return Object.entries(Role).find((entry) => entry[1] === role)?.[0] ?? 'User';
   }
 
   profile = [
