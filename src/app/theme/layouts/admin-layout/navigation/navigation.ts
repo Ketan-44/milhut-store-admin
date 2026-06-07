@@ -69,6 +69,23 @@ export const NavigationItems: NavigationItem[] = [
       }
     ]
   },
+  {
+    id: 'inventory',
+    title: 'Inventory',
+    type: 'group',
+    icon: 'icon-unordered-list',
+    children: [
+      {
+        id: 'inventory-list',
+        title: 'Inventory',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/inventory',
+        icon: 'unordered-list',
+        breadcrumbs: false
+      }
+    ]
+  },
   // {
   //   id: 'authentication',
   //   title: 'Authentication',

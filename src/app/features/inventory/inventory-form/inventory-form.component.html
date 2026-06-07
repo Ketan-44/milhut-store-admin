@@ -1,0 +1,165 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Add Inventory Batch</h5>
+    <a routerLink="/inventory" class="btn btn-outline-secondary btn-sm">Back to List</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      @if (loading) {
+        <div class="text-muted">Loading form data...</div>
+      } @else {
+        <form [formGroup]="inventoryForm" (ngSubmit)="onSubmit()">
+          <div class="form-group mb-3">
+            <label class="form-label" for="productId">Product</label>
+            <select
+              id="productId"
+              class="form-select"
+              formControlName="productId"
+              [class.is-invalid]="f.productId.invalid && (f.productId.touched || submitted)"
+            >
+              <option value="" disabled>Select product</option>
+              @for (product of products; track product._id) {
+                <option [value]="product._id">
+                  {{ product.name }} ({{ product.type }} / {{ product.unit }})
+                </option>
+              }
+            </select>
+
+            @if (f.productId.invalid && (f.productId.touched || submitted)) {
+              <div class="invalid-feedback">Product is required.</div>
+            }
+          </div>
+
+          @if (showBatchTypeReadonly) {
+            <div class="form-group mb-3">
+              <label class="form-label">Batch Type</label>
+              <input type="text" class="form-control" [value]="f.batchType.value" readonly />
+              <small class="text-muted">Automatically set from RAW product.</small>
+            </div>
+          }
+
+          @if (showParentBatchField) {
+            <div class="form-group mb-3">
+              <label class="form-label" for="parentBatch">Parent Batch</label>
+              <select
+                id="parentBatch"
+                class="form-select"
+                formControlName="parentBatch"
+                [class.is-invalid]="f.parentBatch.invalid && (f.parentBatch.touched || submitted)"
+              >
+                <option value="" disabled>Select parent batch</option>
+                @for (batch of availableParentBatches; track batch._id) {
+                  <option [value]="batch._id">
+                    {{ batch.batchNumber }} — {{ batch.batchType }}
+                  </option>
+                }
+              </select>
+
+              @if (parentBatchHint) {
+                <small class="text-muted d-block mt-1">{{ parentBatchHint }}</small>
+              }
+
+              @if (f.parentBatch.invalid && (f.parentBatch.touched || submitted)) {
+                <div class="invalid-feedback">Parent batch is required.</div>
+              }
+
+              @if (availableParentBatches.length === 0) {
+                <small class="text-warning d-block mt-1">
+                  No eligible parent batches with remaining quantity.
+                </small>
+              }
+            </div>
+          }
+
+          @if (showBatchTypeDropdown) {
+            <div class="form-group mb-3">
+              <label class="form-label" for="batchType">Batch Type</label>
+              <select
+                id="batchType"
+                class="form-select"
+                formControlName="batchType"
+                [class.is-invalid]="f.batchType.invalid && (f.batchType.touched || submitted)"
+              >
+                @for (type of availableBatchTypes; track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
+              </select>
+
+              <small class="text-muted d-block mt-1">
+                Selected because you are creating this batch from a parent batch.
+              </small>
+
+              @if (f.batchType.invalid && (f.batchType.touched || submitted)) {
+                <div class="invalid-feedback">Batch type is required.</div>
+              }
+            </div>
+          }
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="quantity">{{ quantityLabel }}</label>
+            <input
+              type="number"
+              id="quantity"
+              class="form-control"
+              [placeholder]="quantityPlaceholder"
+              [step]="quantityStep"
+              min="0.001"
+              formControlName="quantity"
+              [class.is-invalid]="f.quantity.invalid && (f.quantity.touched || submitted)"
+              [disabled]="!selectedProduct"
+            />
+
+            @if (quantityHint) {
+              <small class="text-muted d-block mt-1">{{ quantityHint }}</small>
+            }
+
+            @if (maxParentQuantityHint) {
+              <small class="text-muted d-block mt-1">{{ maxParentQuantityHint }}</small>
+            }
+
+            @if (f.quantity.invalid && (f.quantity.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.quantity.errors?.['required']) {
+                  <div>Quantity is required.</div>
+                }
+                @if (f.quantity.errors?.['min']) {
+                  <div>Quantity must be greater than zero.</div>
+                }
+                @if (f.quantity.errors?.['max']) {
+                  <div>Quantity cannot exceed available parent batch quantity.</div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="expiryDate">Expiry Date</label>
+            <input
+              type="date"
+              id="expiryDate"
+              class="form-control"
+              formControlName="expiryDate"
+              [class.is-invalid]="f.expiryDate.invalid && (f.expiryDate.touched || submitted)"
+            />
+
+            @if (f.expiryDate.invalid && (f.expiryDate.touched || submitted)) {
+              <div class="invalid-feedback">Expiry date is required.</div>
+            }
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          }
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="saving || !selectedProduct">
+              {{ saving ? 'Saving...' : 'Create Batch' }}
+            </button>
+            <a routerLink="/inventory" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+</div>

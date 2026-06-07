@@ -38,6 +38,16 @@ const routes: Routes = [
         loadComponent: () => import('./features/products/product-form/product-form.component').then((c) => c.ProductFormComponent),
         canActivate: [authGuard]
       },
+      {
+        path: 'inventory',
+        loadComponent: () => import('./features/inventory/inventory-list/inventory-list.component').then((c) => c.InventoryListComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'inventory/create',
+        loadComponent: () => import('./features/inventory/inventory-form/inventory-form.component').then((c) => c.InventoryFormComponent),
+        canActivate: [authGuard]
+      },
     ]
   },
   {

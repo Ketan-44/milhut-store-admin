@@ -1,0 +1,47 @@
+<div class="qr-modal-backdrop" (click)="close()"></div>
+
+<div class="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+  <div class="qr-modal-header d-flex justify-content-between align-items-center">
+    <h5 id="qr-modal-title" class="mb-0">Batch QR Code</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+  </div>
+
+  <div id="qr-print-area" class="qr-modal-body text-center">
+    <p class="text-muted mb-1">Product</p>
+    <h6 class="mb-3">{{ preview().productName }}</h6>
+
+    <p class="text-muted mb-1">Batch Number</p>
+    <h6 class="mb-3">{{ preview().batchNumber }}</h6>
+
+    @if (preview().expiryDate) {
+      <p class="text-muted mb-1">Expiry Date</p>
+      <p class="mb-3">{{ preview().expiryDate | date: 'mediumDate' }}</p>
+    }
+
+    @if (loading()) {
+      <div class="py-4 text-muted">Rendering QR code...</div>
+    } @else if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    } @else if (qrImageUrl()) {
+      <img
+        class="qr-image"
+        [src]="qrImageUrl()!"
+        [alt]="'QR code for batch ' + preview().batchNumber"
+      />
+    }
+
+    <p class="qr-code-text mt-3 mb-0">{{ preview().qrCode }}</p>
+  </div>
+
+  <div class="qr-modal-footer d-flex justify-content-end gap-2">
+    <button type="button" class="btn btn-outline-secondary" (click)="close()">Close</button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="loading() || !!error()"
+      (click)="print()"
+    >
+      Print QR
+    </button>
+  </div>
+</div>
