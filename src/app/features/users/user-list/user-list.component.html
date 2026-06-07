@@ -1,0 +1,33 @@
+<div class="col-md-12">
+    <h5 class="mb-3">Users</h5>
+    <div class="card tbl-card">
+      <div class="table-responsive">
+        @if(userResource.hasValue()) {
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+                <!-- <th class="text-end">TOTAL ORDER</th> -->
+                <!-- <th class="text-end">TOTAL AMOUNT</th> -->
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of userResource.value() ?? []; track user._id) {
+                <tr>
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.phone }}</td>
+                  <td>{{ getRole(user.role) | titlecase }}</td>
+                  <td><span class="badge" [ngClass]="{'text-bg-success': user.isActive, 'text-bg-danger': !user.isActive}">{{user.isActive ? 'Active': 'In-Active'}}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+  </div>

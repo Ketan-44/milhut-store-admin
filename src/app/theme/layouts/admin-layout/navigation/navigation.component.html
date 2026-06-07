@@ -1,0 +1,14 @@
+<nav>
+  <div class="navbar-wrapper">
+    <div class="m-header">
+      <a href="javascript:" class="b-brand">
+        <img src="assets/icons/logonew.png" height="74" width="auto" alt="logo" />
+      </a>
+    </div>
+    <app-nav-content
+      (NavCollapsedMob)="navCollapseMob()"
+      (SubmenuCollapse)="navSubmenuCollapse()"
+      class="scroll-div w-100 compact"
+    ></app-nav-content>
+  </div>
+</nav>
