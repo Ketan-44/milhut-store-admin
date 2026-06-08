@@ -1,8 +1,8 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, resource } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { finalize, firstValueFrom, forkJoin, Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { BatchType } from '../models/batch-type.enum';
 import { Inventory } from '../models/inventory.model';
 import { InventoryService } from '../services/inventory.service';
@@ -11,8 +11,13 @@ import { ProductType } from '../../products/models/product-type.enum';
 import { ProductUnit } from '../../products/models/product-unit.enum';
 import { ProductService } from '../../products/services/product.service';
 import {
+  getQuantityHint,
+  getQuantityLabel,
+  getQuantityMin,
   getQuantityPlaceholder,
   getQuantityStep,
+  getUnitDisplayLabel,
+  pieceQuantityValidator,
   toDisplayQuantity,
 } from '../utils/quantity.util';
 
@@ -30,9 +35,20 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   private toastr = inject(ToastrService);
   private subscriptions = new Subscription();
 
-  products: Product[] = [];
-  parentBatches: Inventory[] = [];
-  loading = true;
+  formDataResource = resource({
+    loader: async () => {
+      const [productResponse, inventoryResponse] = await Promise.all([
+        firstValueFrom(this.productService.get()),
+        firstValueFrom(this.inventoryService.get()),
+      ]);
+
+      return {
+        products: productResponse.data,
+        parentBatches: inventoryResponse.data,
+      };
+    },
+  });
+
   submitted = false;
   saving = false;
   errorMessage = '';
@@ -47,6 +63,14 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
 
   get f() {
     return this.inventoryForm.controls;
+  }
+
+  get products(): Product[] {
+    return this.formDataResource.value()?.products ?? [];
+  }
+
+  get parentBatches(): Inventory[] {
+    return this.formDataResource.value()?.parentBatches ?? [];
   }
 
   get selectedProduct(): Product | undefined {
@@ -129,8 +153,11 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   }
 
   get quantityLabel(): string {
-    const unit = this.quantityUnit;
-    return unit ? `Quantity (${unit.toLowerCase()})` : 'Quantity';
+    return getQuantityLabel('Quantity', this.quantityUnit);
+  }
+
+  get quantityMin(): number {
+    return getQuantityMin(this.quantityUnit ?? ProductUnit.PIECE);
   }
 
   get quantityStep(): string {
@@ -148,11 +175,7 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
       return '';
     }
 
-    if (product.unit === ProductUnit.KG) {
-      return 'Enter quantity in kilograms (e.g. 1, 1.5, 2.25). It is stored as grams in the system.';
-    }
-
-    return `Enter quantity in ${product.unit.toLowerCase()}.`;
+    return getQuantityHint(product.unit);
   }
 
   get parentBatchHint(): string {
@@ -182,27 +205,10 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     }
 
     const available = toDisplayQuantity(parentBatch.remainingQuantity, parentProduct.unit);
-    return `Available in parent batch: ${available} ${parentProduct.unit.toLowerCase()}`;
+    return `Available in parent batch: ${available} ${getUnitDisplayLabel(parentProduct.unit)}`;
   }
 
   ngOnInit(): void {
-    this.subscriptions.add(
-      forkJoin({
-        productResponse: this.productService.get(),
-        inventoryResponse: this.inventoryService.get(),
-      })
-        .pipe(finalize(() => (this.loading = false)))
-        .subscribe({
-          next: ({ productResponse, inventoryResponse }) => {
-            this.products = productResponse.data;
-            this.parentBatches = inventoryResponse.data;
-          },
-          error: (error) => {
-            console.error(error);
-          },
-        }),
-    );
-
     this.subscriptions.add(
       this.inventoryForm.controls.productId.valueChanges.subscribe(() => {
         this.onProductChange();
@@ -331,7 +337,12 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     const product = this.selectedProduct;
     const parentBatch = this.selectedParentBatch;
 
-    const validators = [Validators.required, Validators.min(0.001)];
+    const unit = product?.unit ?? ProductUnit.PIECE;
+    const validators = [Validators.required, Validators.min(getQuantityMin(unit))];
+
+    if (unit === ProductUnit.PIECE) {
+      validators.push(pieceQuantityValidator());
+    }
 
     if (parentBatch && product) {
       const maxQuantity = toDisplayQuantity(parentBatch.remainingQuantity, product.unit);

@@ -24,7 +24,7 @@ export class ProductFormComponent {
   productForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     type: [ProductType.RAW, Validators.required],
-    unit: [ProductUnit.KG, Validators.required],
+    unit: [ProductUnit.WEIGHT, Validators.required],
   });
 
   submitted = false;

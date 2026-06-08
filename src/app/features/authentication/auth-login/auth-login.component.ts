@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { AuthenticationService } from '../services/auth.service';
 import { AuthService } from 'src/app/theme/shared/services/auth.service';
 
@@ -16,6 +17,9 @@ export class AuthLoginComponent {
   authenticationService = inject(AuthenticationService);
   authService = inject(AuthService);
   router = inject(Router);
+  private toastr = inject(ToastrService);
+
+  loggingIn = false;
 
   loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -38,13 +42,18 @@ export class AuthLoginComponent {
 
     const credentials = this.loginForm.getRawValue();
 
+    this.loggingIn = true;
+
     this.authenticationService.login(credentials).subscribe({
       next: (response) => {
+        this.loggingIn = false;
         this.authService.storeToken(response.data);
-        this.router.navigate(['/dashboard/default']);
+        this.router.navigate(['/users']);
       },
       error: (error) => {
-        console.error(error);
+        this.loggingIn = false;
+        const message = error.message ?? 'Login failed. Please try again.';
+        this.toastr.error(message, 'Error');
       },
     });
   }

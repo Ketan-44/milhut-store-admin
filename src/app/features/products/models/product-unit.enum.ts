@@ -1,5 +1,4 @@
 export enum ProductUnit {
-  KG = 'KG',
-  GRAM = 'GRAM',
+  WEIGHT = 'WEIGHT',
   PIECE = 'PIECE',
 }

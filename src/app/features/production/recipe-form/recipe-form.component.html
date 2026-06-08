@@ -1,0 +1,137 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Add Recipe</h5>
+    <a routerLink="/production" class="btn btn-outline-secondary btn-sm">Back</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      @if (formDataResource.isLoading()) {
+        <div class="text-muted">Loading form data...</div>
+      } @else if (formDataResource.error()) {
+        <div class="text-danger">Failed to load form data.</div>
+      } @else if (formDataResource.hasValue()) {
+        <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()">
+          <div class="form-group mb-3">
+            <label class="form-label" for="name">Recipe Name</label>
+            <input
+              type="text"
+              id="name"
+              class="form-control"
+              placeholder="Recipe name"
+              formControlName="name"
+              [class.is-invalid]="f.name.invalid && (f.name.touched || submitted)"
+            />
+
+            @if (f.name.invalid && (f.name.touched || submitted)) {
+              <div class="invalid-feedback">Recipe name is required.</div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="finishedProductId">Finished Product</label>
+            <select
+              id="finishedProductId"
+              class="form-select"
+              formControlName="finishedProductId"
+              [class.is-invalid]="f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)"
+            >
+              <option value="" disabled>Select finished product</option>
+              @for (product of finishedProducts; track product._id) {
+                <option [value]="product._id">
+                  {{ product.name }} ({{ product.unit }})
+                </option>
+              }
+            </select>
+
+            @if (f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)) {
+              <div class="invalid-feedback">Finished product is required.</div>
+            }
+
+            @if (finishedProducts.length === 0) {
+              <small class="text-warning d-block mt-1">
+                No finished products found. Create a FINISHED product first.
+              </small>
+            }
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label mb-0">Ingredients (per 1 output unit)</label>
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="addIngredient()">
+                Add Ingredient
+              </button>
+            </div>
+
+            <div formArrayName="ingredients">
+              @for (_ingredient of ingredients.controls; track $index; let i = $index) {
+                <div class="row g-2 mb-2 align-items-end" [formGroupName]="i">
+                  <div class="col-md-6">
+                    <label class="form-label" [for]="'ingredient-product-' + i">Product</label>
+                    <select
+                      [id]="'ingredient-product-' + i"
+                      class="form-select"
+                      formControlName="productId"
+                      [class.is-invalid]="
+                        getIngredientGroup(i).controls.productId.invalid &&
+                        (getIngredientGroup(i).controls.productId.touched || submitted)
+                      "
+                    >
+                      <option value="" disabled>Select ingredient</option>
+                      @for (product of ingredientProducts; track product._id) {
+                        <option [value]="product._id">
+                          {{ product.name }} ({{ product.type }} / {{ product.unit }})
+                        </option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label" [for]="'ingredient-qty-' + i">
+                      {{ getIngredientQuantityLabel(getIngredientGroup(i).controls.productId.value) }}
+                    </label>
+                    <input
+                      type="number"
+                      [id]="'ingredient-qty-' + i"
+                      class="form-control"
+                      formControlName="quantity"
+                      [step]="getQuantityStep(getIngredientGroup(i).controls.productId.value)"
+                      [placeholder]="getQuantityPlaceholder(getIngredientGroup(i).controls.productId.value)"
+                      [min]="getIngredientQuantityMin(getIngredientGroup(i).controls.productId.value)"
+                      [class.is-invalid]="
+                        getIngredientGroup(i).controls.quantity.invalid &&
+                        (getIngredientGroup(i).controls.quantity.touched || submitted)
+                      "
+                    />
+                  </div>
+
+                  <div class="col-md-2">
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger w-100"
+                      [disabled]="ingredients.length === 1"
+                      (click)="removeIngredient(i)"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          }
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Create Recipe' }}
+            </button>
+            <a routerLink="/production" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+</div>

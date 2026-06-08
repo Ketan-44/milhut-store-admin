@@ -57,7 +57,9 @@
             [class.is-invalid]="f.unit.invalid && (f.unit.touched || submitted)"
           >
             @for (unit of productUnits; track unit) {
-              <option [value]="unit">{{ unit }}</option>
+              <option [value]="unit">
+                {{ unit === 'WEIGHT' ? 'WEIGHT (kg)' : unit }}
+              </option>
             }
           </select>
 

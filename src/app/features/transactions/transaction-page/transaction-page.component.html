@@ -1,0 +1,239 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Transactions</h5>
+  </div>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="activeTab === 'list'"
+        (click)="setTab('list')"
+      >
+        All Transactions
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="activeTab === 'sale'"
+        (click)="setTab('sale')"
+      >
+        Record Sale
+      </button>
+    </li>
+  </ul>
+
+  @if (pageDataResource.isLoading()) {
+    <div class="text-muted">Loading transactions...</div>
+  } @else if (pageDataResource.error()) {
+    <div class="text-danger">Failed to load transactions.</div>
+  } @else if (pageDataResource.hasValue() && activeTab === 'list') {
+    <div class="card tbl-card">
+      <div class="table-responsive transaction-table-wrapper">
+        <table class="table table-hover mb-0 transaction-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Product</th>
+              <th>Batch</th>
+              <th>Quantity</th>
+              <th>Performed By</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (transaction of transactions; track transaction._id) {
+              <tr>
+                <td class="text-nowrap">
+                  {{ transaction.createdAt | date: 'medium' }}
+                </td>
+                <td>
+                  <span class="badge" [class]="getTypeBadgeClass(transaction.type)">
+                    {{ transaction.type }}
+                  </span>
+                </td>
+                <td>{{ getTransactionProduct(transaction)?.name ?? '—' }}</td>
+                <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
+                <td>{{ getTransactionQuantity(transaction) }}</td>
+                <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
+                <td>{{ transaction.remarks ?? '—' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">No transactions found.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (pageDataResource.hasValue()) {
+    <div class="card">
+      <div class="card-body">
+        <ul class="nav nav-pills mb-3">
+          <li class="nav-item">
+            <button
+              type="button"
+              class="nav-link"
+              [class.active]="saleMethod === 'batch'"
+              (click)="setSaleMethod('batch')"
+            >
+              Select Batch
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              type="button"
+              class="nav-link"
+              [class.active]="saleMethod === 'qrcode'"
+              (click)="setSaleMethod('qrcode')"
+            >
+              QR Code
+            </button>
+          </li>
+        </ul>
+
+        <form [formGroup]="saleForm" (ngSubmit)="onSubmitSale()">
+          @if (saleMethod === 'batch') {
+            <div class="form-group mb-3">
+              <label class="form-label" for="batch">Batch</label>
+              <select
+                id="batch"
+                class="form-select"
+                formControlName="batch"
+                (change)="onBatchChange()"
+                [class.is-invalid]="submitted && !f.batch.value"
+              >
+                <option value="" disabled>Select batch</option>
+                @for (batch of availableBatches; track batch._id) {
+                  <option [value]="batch._id">
+                    {{ batch.batchNumber }} — {{ products.get(batch.productId)?.name }}
+                  </option>
+                }
+              </select>
+
+              @if (submitted && !f.batch.value) {
+                <div class="invalid-feedback d-block">Batch is required.</div>
+              }
+
+              @if (availableBatches.length === 0) {
+                <small class="text-warning d-block mt-1">
+                  No available batches with remaining quantity.
+                </small>
+              }
+            </div>
+          } @else {
+            <div class="form-group mb-3">
+              <label class="form-label" for="qrCode">QR Code</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="qrCode"
+                  class="form-control"
+                  placeholder="Scan or enter QR code"
+                  formControlName="qrCode"
+                  [class.is-invalid]="submitted && !f.qrCode.value.trim()"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  [disabled]="lookingUpQr"
+                  (click)="lookupQrCode()"
+                >
+                  {{ lookingUpQr ? 'Looking up...' : 'Lookup' }}
+                </button>
+              </div>
+
+              @if (submitted && !f.qrCode.value.trim()) {
+                <div class="invalid-feedback d-block">QR code is required.</div>
+              }
+
+              @if (qrLookupError) {
+                <small class="text-danger d-block mt-1">{{ qrLookupError }}</small>
+              }
+
+              @if (qrLookup) {
+                <div class="alert alert-light border mt-2 mb-0">
+                  <div><strong>Product:</strong> {{ qrLookup.product.name }}</div>
+                  <div><strong>Batch:</strong> {{ qrLookup.batch.batchNumber }}</div>
+                  <div>
+                    <strong>Available:</strong>
+                    {{ qrLookup.batch.displayRemainingQuantity }}
+                    {{ getUnitLabel(qrLookup.product.unit) }}
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="quantity">{{ quantityLabel }}</label>
+            <input
+              type="number"
+              id="quantity"
+              class="form-control"
+              formControlName="quantity"
+              [step]="quantityStep"
+              [min]="quantityMin"
+              [placeholder]="quantityPlaceholder"
+              [disabled]="!selectedProduct"
+              [class.is-invalid]="f.quantity.invalid && (f.quantity.touched || submitted)"
+            />
+
+            @if (quantityHint) {
+              <small class="text-muted d-block mt-1">{{ quantityHint }}</small>
+            }
+
+            @if (maxSaleQuantityHint) {
+              <small class="text-muted d-block mt-1">{{ maxSaleQuantityHint }}</small>
+            }
+
+            @if (f.quantity.invalid && (f.quantity.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.quantity.errors?.['required']) {
+                  <div>Quantity is required.</div>
+                }
+                @if (f.quantity.errors?.['min']) {
+                  <div>Quantity must be greater than zero.</div>
+                }
+                @if (f.quantity.errors?.['max']) {
+                  <div>Quantity exceeds available batch stock.</div>
+                }
+                @if (f.quantity.errors?.['integer']) {
+                  <div>Quantity must be a whole number for piece products.</div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="remarks">Remarks (optional)</label>
+            <textarea
+              id="remarks"
+              class="form-control"
+              rows="2"
+              formControlName="remarks"
+              placeholder="Sale remarks"
+            ></textarea>
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="saving || !selectedProduct"
+          >
+            {{ saving ? 'Recording...' : 'Record Sale' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+</div>

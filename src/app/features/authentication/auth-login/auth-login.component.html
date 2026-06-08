@@ -49,8 +49,8 @@
             </div>
 
             <div class="d-grid mt-4">
-              <button type="submit" class="btn btn-primary" [disabled]="loginForm.invalid">
-                Login
+              <button type="submit" class="btn btn-primary" [disabled]="loginForm.invalid || loggingIn">
+                {{ loggingIn ? 'Logging in...' : 'Login' }}
               </button>
             </div>
           </form>

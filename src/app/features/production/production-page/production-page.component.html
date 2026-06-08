@@ -1,0 +1,190 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Production</h5>
+    <a routerLink="/production/recipes/create" class="btn btn-primary btn-sm">Add Recipe</a>
+  </div>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="activeTab === 'recipes'"
+        (click)="setTab('recipes')"
+      >
+        Recipes
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="activeTab === 'run'"
+        (click)="setTab('run')"
+      >
+        Run Production
+      </button>
+    </li>
+  </ul>
+
+  @if (pageDataResource.isLoading()) {
+    <div class="text-muted">Loading production data...</div>
+  } @else if (pageDataResource.error()) {
+    <div class="text-danger">Failed to load production data.</div>
+  } @else if (pageDataResource.hasValue() && activeTab === 'recipes') {
+    <div class="card tbl-card">
+      <div class="table-responsive production-table-wrapper">
+        <table class="table table-hover mb-0 production-table">
+          <thead>
+            <tr>
+              <th>Recipe</th>
+              <th>Finished Product</th>
+              <th>Ingredients</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (recipe of recipes; track recipe._id) {
+              <tr>
+                <td>{{ recipe.name }}</td>
+                <td>{{ getProductName(recipe.finishedProductId) }}</td>
+                <td>{{ getIngredientDisplay(recipe) }}</td>
+                <td class="text-end">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="runProductionForRecipe(recipe._id)"
+                  >
+                    Run Production
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">No recipes found.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (pageDataResource.hasValue()) {
+    <div class="card">
+      <div class="card-body">
+        <form [formGroup]="productionForm" (ngSubmit)="onSubmitProduction()">
+          <div class="form-group mb-3">
+            <label class="form-label" for="recipeId">Recipe</label>
+            <select
+              id="recipeId"
+              class="form-select"
+              formControlName="recipeId"
+              [class.is-invalid]="f.recipeId.invalid && (f.recipeId.touched || submitted)"
+            >
+              <option value="" disabled>Select recipe</option>
+              @for (recipe of recipes; track recipe._id) {
+                <option [value]="recipe._id">
+                  {{ recipe.name }} — {{ getProductName(recipe.finishedProductId) }}
+                </option>
+              }
+            </select>
+
+            @if (f.recipeId.invalid && (f.recipeId.touched || submitted)) {
+              <div class="invalid-feedback">Recipe is required.</div>
+            }
+          </div>
+
+          @if (selectedRecipe) {
+            <div class="alert alert-light border mb-3">
+              <div class="fw-semibold mb-2">Recipe ingredients (per 1 output unit)</div>
+              @if (selectedRecipe.ingredients?.length) {
+                <ul class="mb-0 ps-3">
+                  @for (ingredient of selectedRecipe.ingredients; track ingredient.productId) {
+                    <li>
+                      {{ getProductName(ingredient.productId) }} —
+                      {{ ingredient.quantity }}
+                      {{ getIngredientUnitLabel(ingredient.productId) }}
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <span class="text-muted">This recipe has no ingredients.</span>
+              }
+            </div>
+          }
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="outputQuantity">{{ outputQuantityLabel }}</label>
+            <input
+              type="number"
+              id="outputQuantity"
+              class="form-control"
+              formControlName="outputQuantity"
+              [step]="outputQuantityStep"
+              [placeholder]="outputQuantityPlaceholder"
+              [min]="outputQuantityMin"
+              [class.is-invalid]="f.outputQuantity.invalid && (f.outputQuantity.touched || submitted)"
+            />
+
+            @if (outputQuantityHint) {
+              <small class="text-muted d-block mt-1">{{ outputQuantityHint }}</small>
+            }
+
+            @if (f.outputQuantity.invalid && (f.outputQuantity.touched || submitted)) {
+              <div class="invalid-feedback">Output quantity is required.</div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="expiryDate">Produced Batch Expiry</label>
+            <input
+              type="date"
+              id="expiryDate"
+              class="form-control"
+              formControlName="expiryDate"
+              [class.is-invalid]="f.expiryDate.invalid && (f.expiryDate.touched || submitted)"
+            />
+
+            @if (f.expiryDate.invalid && (f.expiryDate.touched || submitted)) {
+              <div class="invalid-feedback">Expiry date is required.</div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="remarks">Remarks (optional)</label>
+            <textarea
+              id="remarks"
+              class="form-control"
+              rows="2"
+              formControlName="remarks"
+              placeholder="Production remarks"
+            ></textarea>
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          }
+
+          @if (lastResult) {
+            <div class="alert alert-success" role="alert">
+              <div class="fw-semibold mb-1">Production completed</div>
+              <div>Batch: {{ lastResult.producedBatch.batchNumber }}</div>
+              <div>
+                Output:
+                {{
+                  getDisplayQuantity(
+                    lastResult.producedBatch.quantity,
+                    lastResult.producedBatch.productId
+                  )
+                }}
+              </div>
+            </div>
+          }
+
+          <button type="submit" class="btn btn-primary" [disabled]="saving || recipes.length === 0">
+            {{ saving ? 'Running...' : 'Run Production' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+</div>

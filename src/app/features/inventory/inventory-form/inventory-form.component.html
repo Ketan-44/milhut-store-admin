@@ -6,9 +6,11 @@
 
   <div class="card">
     <div class="card-body">
-      @if (loading) {
+      @if (formDataResource.isLoading()) {
         <div class="text-muted">Loading form data...</div>
-      } @else {
+      } @else if (formDataResource.error()) {
+        <div class="text-danger">Failed to load form data.</div>
+      } @else if (formDataResource.hasValue()) {
         <form [formGroup]="inventoryForm" (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
             <label class="form-label" for="productId">Product</label>
@@ -104,7 +106,7 @@
               class="form-control"
               [placeholder]="quantityPlaceholder"
               [step]="quantityStep"
-              min="0.001"
+              [min]="quantityMin"
               formControlName="quantity"
               [class.is-invalid]="f.quantity.invalid && (f.quantity.touched || submitted)"
               [disabled]="!selectedProduct"
@@ -125,6 +127,9 @@
                 }
                 @if (f.quantity.errors?.['min']) {
                   <div>Quantity must be greater than zero.</div>
+                }
+                @if (f.quantity.errors?.['integer']) {
+                  <div>Quantity must be a whole number for piece products.</div>
                 }
                 @if (f.quantity.errors?.['max']) {
                   <div>Quantity cannot exceed available parent batch quantity.</div>

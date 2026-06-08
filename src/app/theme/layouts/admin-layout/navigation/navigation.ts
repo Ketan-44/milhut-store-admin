@@ -86,6 +86,40 @@ export const NavigationItems: NavigationItem[] = [
       }
     ]
   },
+  {
+    id: 'production',
+    title: 'Production',
+    type: 'group',
+    icon: 'icon-navigation',
+    children: [
+      {
+        id: 'production-page',
+        title: 'Production',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/production',
+        icon: 'product',
+        breadcrumbs: false
+      }
+    ]
+  },
+  {
+    id: 'transactions',
+    title: 'Transactions',
+    type: 'group',
+    icon: 'icon-navigation',
+    children: [
+      {
+        id: 'transactions-page',
+        title: 'Transactions',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/transactions',
+        icon: 'wallet',
+        breadcrumbs: false
+      }
+    ]
+  },
   // {
   //   id: 'authentication',
   //   title: 'Authentication',

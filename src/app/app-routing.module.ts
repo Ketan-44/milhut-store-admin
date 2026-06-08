@@ -48,6 +48,21 @@ const routes: Routes = [
         loadComponent: () => import('./features/inventory/inventory-form/inventory-form.component').then((c) => c.InventoryFormComponent),
         canActivate: [authGuard]
       },
+      {
+        path: 'production',
+        loadComponent: () => import('./features/production/production-page/production-page.component').then((c) => c.ProductionPageComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'production/recipes/create',
+        loadComponent: () => import('./features/production/recipe-form/recipe-form.component').then((c) => c.RecipeFormComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'transactions',
+        loadComponent: () => import('./features/transactions/transaction-page/transaction-page.component').then((c) => c.TransactionPageComponent),
+        canActivate: [authGuard]
+      },
     ]
   },
   {

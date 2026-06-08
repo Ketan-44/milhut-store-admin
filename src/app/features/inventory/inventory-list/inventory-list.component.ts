@@ -11,7 +11,7 @@ import {
   QrPreviewData,
 } from '../inventory-qr-preview/inventory-qr-preview.component';
 import { InventoryService } from '../services/inventory.service';
-import { toDisplayQuantity } from '../utils/quantity.util';
+import { formatDisplayQuantity } from '../utils/quantity.util';
 
 @Component({
   selector: 'app-inventory-list',
@@ -59,8 +59,7 @@ export class InventoryListComponent {
       return String(quantity);
     }
 
-    const display = toDisplayQuantity(quantity, product.unit);
-    return `${display} ${product.unit}`;
+    return formatDisplayQuantity(quantity, product.unit);
   }
 
   isExpired(expiryDate: string): boolean {
