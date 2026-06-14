@@ -24,9 +24,9 @@
           <tbody>
             @for (product of productResource.value() ?? []; track product._id) {
               <tr>
-                <td>{{ product.name }}</td>
-                <td>{{ product.type }}</td>
-                <td>{{ product.unit }}</td>
+                <td>{{ product.name | titlecase }}</td>
+                <td>{{ product.type | titlecase }}</td>
+                <td>{{ product.unit | titlecase }}</td>
                 <!-- <td>{{ product.lowStockAlert }}</td> -->
                 <td>
                   <span

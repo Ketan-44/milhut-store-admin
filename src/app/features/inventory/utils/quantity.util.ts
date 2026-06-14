@@ -63,7 +63,7 @@ export function getUnitDisplayLabel(unit: ProductUnit): string {
     return 'kg';
   }
 
-  return unit.toLowerCase();
+  return 'Piece';
 }
 
 export function getQuantityHint(unit: ProductUnit): string {

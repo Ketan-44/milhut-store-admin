@@ -53,10 +53,10 @@
                 </td>
                 <td>
                   <span class="badge" [class]="getTypeBadgeClass(transaction.type)">
-                    {{ transaction.type }}
+                    {{ transaction.type | titlecase }}
                   </span>
                 </td>
-                <td>{{ getTransactionProduct(transaction)?.name ?? '—' }}</td>
+                <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
                 <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
                 <td>{{ getTransactionQuantity(transaction) }}</td>
                 <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
@@ -89,10 +89,10 @@
             <button
               type="button"
               class="nav-link"
-              [class.active]="saleMethod === 'qrcode'"
-              (click)="setSaleMethod('qrcode')"
+              [class.active]="saleMethod === 'scan'"
+              (click)="setSaleMethod('scan')"
             >
-              QR Code
+              Scan QR
             </button>
           </li>
         </ul>
@@ -111,7 +111,7 @@
                 <option value="" disabled>Select batch</option>
                 @for (batch of availableBatches; track batch._id) {
                   <option [value]="batch._id">
-                    {{ batch.batchNumber }} — {{ products.get(batch.productId)?.name }}
+                    {{ batch.batchNumber }} — {{ products.get(batch.productId)?.name | titlecase }}
                   </option>
                 }
               </select>
@@ -128,42 +128,46 @@
             </div>
           } @else {
             <div class="form-group mb-3">
-              <label class="form-label" for="qrCode">QR Code</label>
+              <label class="form-label" for="batchNumber">Batch Number</label>
               <div class="input-group">
                 <input
                   type="text"
-                  id="qrCode"
+                  id="batchNumber"
                   class="form-control"
-                  placeholder="Scan or enter QR code"
-                  formControlName="qrCode"
-                  [class.is-invalid]="submitted && !f.qrCode.value.trim()"
+                  placeholder="Scan QR or enter batch number"
+                  formControlName="batchNumber"
+                  [class.is-invalid]="submitted && !f.batchNumber.value.trim()"
                 />
                 <button
                   type="button"
                   class="btn btn-outline-primary"
-                  [disabled]="lookingUpQr"
-                  (click)="lookupQrCode()"
+                  [disabled]="lookingUpBatch"
+                  (click)="lookupBatchNumber()"
                 >
-                  {{ lookingUpQr ? 'Looking up...' : 'Lookup' }}
+                  {{ lookingUpBatch ? 'Looking up...' : 'Lookup' }}
                 </button>
               </div>
 
-              @if (submitted && !f.qrCode.value.trim()) {
-                <div class="invalid-feedback d-block">QR code is required.</div>
+              @if (submitted && !f.batchNumber.value.trim()) {
+                <div class="invalid-feedback d-block">Batch number is required.</div>
               }
 
-              @if (qrLookupError) {
-                <small class="text-danger d-block mt-1">{{ qrLookupError }}</small>
+              @if (batchLookupError) {
+                <small class="text-danger d-block mt-1">{{ batchLookupError }}</small>
               }
 
-              @if (qrLookup) {
+              @if (batchLookup) {
                 <div class="alert alert-light border mt-2 mb-0">
-                  <div><strong>Product:</strong> {{ qrLookup.product.name }}</div>
-                  <div><strong>Batch:</strong> {{ qrLookup.batch.batchNumber }}</div>
+                  <div><strong>Product:</strong> {{ batchLookup.product.name | titlecase }}</div>
+                  <div><strong>Batch:</strong> {{ batchLookup.batch.batchNumber }}</div>
                   <div>
                     <strong>Available:</strong>
-                    {{ qrLookup.batch.displayRemainingQuantity }}
-                    {{ getUnitLabel(qrLookup.product.unit) }}
+                    {{ batchLookup.batch.displayRemainingQuantity }}
+                    {{
+                      batchLookup.product.unit === 'WEIGHT'
+                        ? 'kg'
+                        : (batchLookup.product.unit | titlecase)
+                    }}
                   </div>
                 </div>
               }

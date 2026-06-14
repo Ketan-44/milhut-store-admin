@@ -5,13 +5,12 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import * as QRCode from 'qrcode';
 
 export interface QrPreviewData {
   batchNumber: string;
   productName: string;
-  qrCode: string;
   expiryDate?: string;
 }
 
@@ -19,7 +18,7 @@ export interface QrPreviewData {
   selector: 'app-inventory-qr-preview',
   templateUrl: './inventory-qr-preview.component.html',
   styleUrl: './inventory-qr-preview.component.scss',
-  imports: [DatePipe],
+  imports: [DatePipe, TitleCasePipe],
 })
 export class InventoryQrPreviewComponent {
   preview = input.required<QrPreviewData>();
@@ -32,7 +31,7 @@ export class InventoryQrPreviewComponent {
   constructor() {
     effect(() => {
       const data = this.preview();
-      void this.renderQr(data.qrCode);
+      void this.renderQr(data.batchNumber);
     });
   }
 
@@ -100,7 +99,6 @@ export class InventoryQrPreviewComponent {
           <p>Batch: ${data.batchNumber}</p>
           ${expiryLine}
           <img src="${imageUrl}" alt="QR Code" />
-          <p class="code">${data.qrCode}</p>
         </body>
       </html>
     `);

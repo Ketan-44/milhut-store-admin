@@ -23,7 +23,7 @@
               <option value="" disabled>Select product</option>
               @for (product of products; track product._id) {
                 <option [value]="product._id">
-                  {{ product.name }} ({{ product.type }} / {{ product.unit }})
+                  {{ product.name | titlecase }} ({{ product.type | titlecase }} / {{ product.unit | titlecase }})
                 </option>
               }
             </select>
@@ -33,11 +33,27 @@
             }
           </div>
 
-          @if (showBatchTypeReadonly) {
+          @if (showSourceTypeDropdown) {
             <div class="form-group mb-3">
-              <label class="form-label">Batch Type</label>
-              <input type="text" class="form-control" [value]="f.batchType.value" readonly />
-              <small class="text-muted">Automatically set from RAW product.</small>
+              <label class="form-label" for="sourceType">Source</label>
+              <select
+                id="sourceType"
+                class="form-select"
+                formControlName="sourceType"
+                [class.is-invalid]="f.sourceType.invalid && (f.sourceType.touched || submitted)"
+              >
+                @for (type of sourceTypeOptions; track type) {
+                  <option [value]="type">{{ type | titlecase }}</option>
+                }
+              </select>
+
+              @if (sourceTypeHint) {
+                <small class="text-muted d-block mt-1">{{ sourceTypeHint }}</small>
+              }
+
+              @if (f.sourceType.invalid && (f.sourceType.touched || submitted)) {
+                <div class="invalid-feedback">Source is required.</div>
+              }
             </div>
           }
 
@@ -53,7 +69,7 @@
                 <option value="" disabled>Select parent batch</option>
                 @for (batch of availableParentBatches; track batch._id) {
                   <option [value]="batch._id">
-                    {{ batch.batchNumber }} — {{ batch.batchType }}
+                    {{ batch.batchNumber }} — {{ batch.batchType | titlecase }}
                   </option>
                 }
               </select>
@@ -70,30 +86,6 @@
                 <small class="text-warning d-block mt-1">
                   No eligible parent batches with remaining quantity.
                 </small>
-              }
-            </div>
-          }
-
-          @if (showBatchTypeDropdown) {
-            <div class="form-group mb-3">
-              <label class="form-label" for="batchType">Batch Type</label>
-              <select
-                id="batchType"
-                class="form-select"
-                formControlName="batchType"
-                [class.is-invalid]="f.batchType.invalid && (f.batchType.touched || submitted)"
-              >
-                @for (type of availableBatchTypes; track type) {
-                  <option [value]="type">{{ type }}</option>
-                }
-              </select>
-
-              <small class="text-muted d-block mt-1">
-                Selected because you are creating this batch from a parent batch.
-              </small>
-
-              @if (f.batchType.invalid && (f.batchType.touched || submitted)) {
-                <div class="invalid-feedback">Batch type is required.</div>
               }
             </div>
           }

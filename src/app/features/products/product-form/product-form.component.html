@@ -39,7 +39,7 @@
             [class.is-invalid]="f.type.invalid && (f.type.touched || submitted)"
           >
             @for (type of productTypes; track type) {
-              <option [value]="type">{{ type }}</option>
+              <option [value]="type">{{ type | titlecase }}</option>
             }
           </select>
 
@@ -58,7 +58,7 @@
           >
             @for (unit of productUnits; track unit) {
               <option [value]="unit">
-                {{ unit === 'WEIGHT' ? 'WEIGHT (kg)' : unit }}
+                {{ unit | titlecase }}{{ unit === 'WEIGHT' ? ' (kg)' : '' }}
               </option>
             }
           </select>

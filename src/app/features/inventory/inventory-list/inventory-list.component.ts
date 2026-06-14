@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { resource } from '@angular/core';
@@ -17,14 +17,12 @@ import { formatDisplayQuantity } from '../utils/quantity.util';
   selector: 'app-inventory-list',
   templateUrl: './inventory-list.component.html',
   styleUrls: ['./inventory-list.component.scss'],
-  imports: [RouterModule, DatePipe, InventoryQrPreviewComponent],
+  imports: [RouterModule, DatePipe, TitleCasePipe, InventoryQrPreviewComponent],
 })
 export class InventoryListComponent {
   private inventoryService = inject(InventoryService);
   private productService = inject(ProductService);
 
-  generatingQrFor: string | null = null;
-  qrError = '';
   qrPreview: QrPreviewData | null = null;
 
   inventoryResource = resource({
@@ -66,36 +64,7 @@ export class InventoryListComponent {
     return new Date(expiryDate).getTime() < Date.now();
   }
 
-  generateQr(batch: Inventory): void {
-    this.generatingQrFor = batch._id;
-    this.qrError = '';
-
-    this.inventoryService.generateQr(batch._id).subscribe({
-      next: (response) => {
-        this.generatingQrFor = null;
-        this.inventoryResource.reload();
-        this.openQrPreview(batch, response.data.qrCode);
-      },
-      error: (error) => {
-        this.generatingQrFor = null;
-        this.qrError = error.message ?? 'Failed to generate QR code.';
-      },
-    });
-  }
-
   viewQr(batch: Inventory): void {
-    if (!batch.qrCode) {
-      return;
-    }
-
-    this.openQrPreview(batch, batch.qrCode);
-  }
-
-  closeQrPreview(): void {
-    this.qrPreview = null;
-  }
-
-  private openQrPreview(batch: Inventory, qrCode: string): void {
     const products = this.inventoryResource.value()?.products;
 
     this.qrPreview = {
@@ -103,8 +72,11 @@ export class InventoryListComponent {
       productName: products
         ? this.getProductName(batch.productId, products)
         : batch.productId,
-      qrCode,
       expiryDate: batch.expiryDate,
     };
+  }
+
+  closeQrPreview(): void {
+    this.qrPreview = null;
   }
 }

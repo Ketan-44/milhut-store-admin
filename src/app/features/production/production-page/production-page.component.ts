@@ -1,4 +1,5 @@
 import { Component, inject, resource } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -22,12 +23,14 @@ import { RecipeService } from '../services/recipe.service';
 
 @Component({
   selector: 'app-production-page',
-  imports: [RouterModule, ReactiveFormsModule],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  providers: [TitleCasePipe],
   templateUrl: './production-page.component.html',
   styleUrl: './production-page.component.scss',
 })
 export class ProductionPageComponent {
   private fb = inject(FormBuilder);
+  private titleCasePipe = inject(TitleCasePipe);
   private recipeService = inject(RecipeService);
   private productionService = inject(ProductionService);
   private productService = inject(ProductService);
@@ -144,7 +147,10 @@ export class ProductionPageComponent {
       .map((ingredient) => {
         const product = this.products.get(ingredient.productId);
         const unit = product ? getUnitDisplayLabel(product.unit) : '';
-        return `${this.getProductName(ingredient.productId)} (${ingredient.quantity} ${unit})`;
+        const productName = this.titleCasePipe.transform(
+          this.getProductName(ingredient.productId),
+        );
+        return `${productName} (${ingredient.quantity} ${unit})`;
       })
       .join(', ');
   }

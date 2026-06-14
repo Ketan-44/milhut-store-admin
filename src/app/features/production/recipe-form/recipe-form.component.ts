@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import {
   FormArray,
   FormBuilder,
@@ -31,7 +32,7 @@ type IngredientFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-recipe-form',
-  imports: [RouterModule, ReactiveFormsModule],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
   templateUrl: './recipe-form.component.html',
   styleUrl: './recipe-form.component.scss',
 })

@@ -39,7 +39,7 @@
               <option value="" disabled>Select finished product</option>
               @for (product of finishedProducts; track product._id) {
                 <option [value]="product._id">
-                  {{ product.name }} ({{ product.unit }})
+                  {{ product.name | titlecase }} ({{ product.unit | titlecase }})
                 </option>
               }
             </select>
@@ -80,7 +80,7 @@
                       <option value="" disabled>Select ingredient</option>
                       @for (product of ingredientProducts; track product._id) {
                         <option [value]="product._id">
-                          {{ product.name }} ({{ product.type }} / {{ product.unit }})
+                          {{ product.name | titlecase }} ({{ product.type | titlecase }} / {{ product.unit | titlecase }})
                         </option>
                       }
                     </select>

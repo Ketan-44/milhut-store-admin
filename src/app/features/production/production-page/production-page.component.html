@@ -47,7 +47,7 @@
             @for (recipe of recipes; track recipe._id) {
               <tr>
                 <td>{{ recipe.name }}</td>
-                <td>{{ getProductName(recipe.finishedProductId) }}</td>
+                <td>{{ getProductName(recipe.finishedProductId) | titlecase }}</td>
                 <td>{{ getIngredientDisplay(recipe) }}</td>
                 <td class="text-end">
                   <button
@@ -83,7 +83,7 @@
               <option value="" disabled>Select recipe</option>
               @for (recipe of recipes; track recipe._id) {
                 <option [value]="recipe._id">
-                  {{ recipe.name }} — {{ getProductName(recipe.finishedProductId) }}
+                  {{ recipe.name }} — {{ getProductName(recipe.finishedProductId) | titlecase }}
                 </option>
               }
             </select>
@@ -100,7 +100,7 @@
                 <ul class="mb-0 ps-3">
                   @for (ingredient of selectedRecipe.ingredients; track ingredient.productId) {
                     <li>
-                      {{ getProductName(ingredient.productId) }} —
+                      {{ getProductName(ingredient.productId) | titlecase }} —
                       {{ ingredient.quantity }}
                       {{ getIngredientUnitLabel(ingredient.productId) }}
                     </li>

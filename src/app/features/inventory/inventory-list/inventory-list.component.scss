@@ -4,7 +4,7 @@
 }
 
 .inventory-table {
-  min-width: 1100px;
+  min-width: 980px;
   margin-bottom: 0;
 }
 
@@ -37,19 +37,13 @@
   white-space: nowrap;
 }
 
-.col-qr-code {
-  min-width: 220px;
-  max-width: 280px;
-  word-break: break-all;
-}
-
 .col-status {
   min-width: 110px;
   white-space: nowrap;
 }
 
 .col-actions {
-  min-width: 220px;
+  min-width: 120px;
   white-space: nowrap;
 }
 

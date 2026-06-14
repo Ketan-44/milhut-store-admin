@@ -1,9 +1,11 @@
 import { Component, inject, OnDestroy, OnInit, resource } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { BatchType } from '../models/batch-type.enum';
+import { InventorySourceType } from '../models/inventory-source-type.enum';
 import { Inventory } from '../models/inventory.model';
 import { InventoryService } from '../services/inventory.service';
 import { Product } from '../../products/models/product.model';
@@ -23,7 +25,7 @@ import {
 
 @Component({
   selector: 'app-inventory-form',
-  imports: [RouterModule, ReactiveFormsModule],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
   templateUrl: './inventory-form.component.html',
   styleUrl: './inventory-form.component.scss',
 })
@@ -34,6 +36,9 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private toastr = inject(ToastrService);
   private subscriptions = new Subscription();
+
+  readonly InventorySourceType = InventorySourceType;
+  readonly sourceTypeOptions = Object.values(InventorySourceType);
 
   formDataResource = resource({
     loader: async () => {
@@ -56,7 +61,7 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   inventoryForm = this.fb.nonNullable.group({
     productId: ['', Validators.required],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
-    batchType: [BatchType.RAW, Validators.required],
+    sourceType: [InventorySourceType.DIRECT, Validators.required],
     parentBatch: [''],
     expiryDate: ['', Validators.required],
   });
@@ -78,17 +83,16 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     return this.products.find((product) => product._id === productId);
   }
 
-  get showParentBatchField(): boolean {
+  get showSourceTypeDropdown(): boolean {
     const product = this.selectedProduct;
     return product?.type === ProductType.PROCESSED || product?.type === ProductType.FINISHED;
   }
 
-  get showBatchTypeDropdown(): boolean {
-    return this.showParentBatchField && !!this.inventoryForm.controls.parentBatch.value;
-  }
-
-  get showBatchTypeReadonly(): boolean {
-    return this.selectedProduct?.type === ProductType.RAW;
+  get showParentBatchField(): boolean {
+    return (
+      this.showSourceTypeDropdown &&
+      this.inventoryForm.controls.sourceType.value === InventorySourceType.CONVERTED
+    );
   }
 
   get availableParentBatches(): Inventory[] {
@@ -113,24 +117,6 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
 
       return false;
     });
-  }
-
-  get availableBatchTypes(): BatchType[] {
-    const product = this.selectedProduct;
-
-    if (!product || !this.showBatchTypeDropdown) {
-      return [];
-    }
-
-    if (product.type === ProductType.PROCESSED) {
-      return [BatchType.CONVERTED];
-    }
-
-    if (product.type === ProductType.FINISHED) {
-      return [BatchType.PRODUCED];
-    }
-
-    return [];
   }
 
   get selectedParentBatch(): Inventory | undefined {
@@ -178,6 +164,28 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     return getQuantityHint(product.unit);
   }
 
+  get sourceTypeHint(): string {
+    const product = this.selectedProduct;
+
+    if (!product) {
+      return '';
+    }
+
+    if (this.inventoryForm.controls.sourceType.value === InventorySourceType.DIRECT) {
+      return 'Add inventory directly without linking to a parent batch.';
+    }
+
+    if (product.type === ProductType.PROCESSED) {
+      return 'Convert from a Raw batch into this processed product.';
+    }
+
+    if (product.type === ProductType.FINISHED) {
+      return 'Produce from a Converted batch into this finished product.';
+    }
+
+    return '';
+  }
+
   get parentBatchHint(): string {
     const product = this.selectedProduct;
 
@@ -186,11 +194,11 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     }
 
     if (product.type === ProductType.PROCESSED) {
-      return 'Select a RAW batch to convert into this processed product.';
+      return 'Select a Raw batch to convert into this processed product.';
     }
 
     if (product.type === ProductType.FINISHED) {
-      return 'Select a CONVERTED batch to produce this finished product.';
+      return 'Select a Converted batch to produce this finished product.';
     }
 
     return '';
@@ -216,6 +224,12 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.add(
+      this.inventoryForm.controls.sourceType.valueChanges.subscribe(() => {
+        this.onSourceTypeChange();
+      }),
+    );
+
+    this.subscriptions.add(
       this.inventoryForm.controls.parentBatch.valueChanges.subscribe(() => {
         this.onParentBatchChange();
       }),
@@ -235,15 +249,20 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const { productId, quantity, batchType, parentBatch, expiryDate } =
+    const { productId, quantity, parentBatch, expiryDate } =
       this.inventoryForm.getRawValue();
+    const product = this.selectedProduct;
+
+    if (!product || quantity === null) {
+      return;
+    }
 
     const payload = {
       productId,
-      quantity: quantity!,
-      batchType,
+      quantity,
+      batchType: this.getBatchTypeFromProduct(product.type),
       expiryDate,
-      ...(parentBatch ? { parentBatch } : {}),
+      ...(this.showParentBatchField && parentBatch ? { parentBatch } : {}),
     };
 
     this.saving = true;
@@ -265,50 +284,38 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   private onProductChange(): void {
     const product = this.selectedProduct;
     const parentBatchControl = this.inventoryForm.controls.parentBatch;
-    const batchTypeControl = this.inventoryForm.controls.batchType;
+    const sourceTypeControl = this.inventoryForm.controls.sourceType;
     const quantityControl = this.inventoryForm.controls.quantity;
 
     parentBatchControl.setValue('');
     quantityControl.setValue(null);
 
-    if (!product) {
-      batchTypeControl.setValue(BatchType.RAW);
-      this.updateParentBatchValidators();
-      this.updateQuantityValidators();
-      return;
-    }
-
-    if (product.type === ProductType.RAW) {
-      batchTypeControl.setValue(BatchType.RAW);
+    if (!product || product.type === ProductType.RAW) {
+      sourceTypeControl.setValue(InventorySourceType.DIRECT);
       parentBatchControl.clearValidators();
       parentBatchControl.setValue('');
     } else {
-      batchTypeControl.setValue(this.getDefaultBatchType(product.type));
-      parentBatchControl.setValidators([Validators.required]);
+      sourceTypeControl.setValue(InventorySourceType.DIRECT);
+      this.updateParentBatchValidators();
     }
 
     parentBatchControl.updateValueAndValidity();
     this.updateQuantityValidators();
   }
 
-  private onParentBatchChange(): void {
-    const product = this.selectedProduct;
-    const parentBatchId = this.inventoryForm.controls.parentBatch.value;
-    const batchTypeControl = this.inventoryForm.controls.batchType;
+  private onSourceTypeChange(): void {
+    const parentBatchControl = this.inventoryForm.controls.parentBatch;
 
-    if (!product || !parentBatchId) {
-      if (product?.type === ProductType.RAW) {
-        batchTypeControl.setValue(BatchType.RAW);
-      }
-      this.updateQuantityValidators();
-      return;
-    }
-
-    batchTypeControl.setValue(this.getDefaultBatchType(product.type));
+    parentBatchControl.setValue('');
+    this.updateParentBatchValidators();
     this.updateQuantityValidators();
   }
 
-  private getDefaultBatchType(productType: ProductType): BatchType {
+  private onParentBatchChange(): void {
+    this.updateQuantityValidators();
+  }
+
+  private getBatchTypeFromProduct(productType: ProductType): BatchType {
     switch (productType) {
       case ProductType.RAW:
         return BatchType.RAW;

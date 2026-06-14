@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -8,7 +9,7 @@ import { ProductService } from '../services/product.service';
 
 @Component({
   selector: 'app-product-form',
-  imports: [RouterModule, ReactiveFormsModule],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
   templateUrl: './product-form.component.html',
   styleUrl: './product-form.component.scss',
 })

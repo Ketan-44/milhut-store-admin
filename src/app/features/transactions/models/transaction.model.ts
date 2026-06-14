@@ -36,7 +36,7 @@ export interface Transaction {
 
 export interface CreateSale {
   batch?: string;
-  qrCode?: string;
+  batchNumber?: string;
   quantity: number;
   remarks?: string;
 }

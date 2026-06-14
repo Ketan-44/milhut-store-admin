@@ -1,9 +1,9 @@
 import { Component, inject, resource } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
-import { BatchQrLookup } from '../../inventory/models/inventory.model';
+import { BatchLookup } from '../../inventory/models/inventory.model';
 import { Inventory } from '../../inventory/models/inventory.model';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import {
@@ -30,11 +30,11 @@ import {
 } from '../models/transaction.model';
 import { TransactionService } from '../services/transaction.service';
 
-type SaleMethod = 'batch' | 'qrcode';
+type SaleMethod = 'batch' | 'scan';
 
 @Component({
   selector: 'app-transaction-page',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, TitleCasePipe],
   templateUrl: './transaction-page.component.html',
   styleUrl: './transaction-page.component.scss',
 })
@@ -49,10 +49,10 @@ export class TransactionPageComponent {
   saleMethod: SaleMethod = 'batch';
   submitted = false;
   saving = false;
-  lookingUpQr = false;
+  lookingUpBatch = false;
   errorMessage = '';
-  qrLookup: BatchQrLookup | null = null;
-  qrLookupError = '';
+  batchLookup: BatchLookup | null = null;
+  batchLookupError = '';
 
   pageDataResource = resource({
     loader: async () => {
@@ -77,7 +77,7 @@ export class TransactionPageComponent {
 
   saleForm = this.fb.nonNullable.group({
     batch: [''],
-    qrCode: [''],
+    batchNumber: [''],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     remarks: [''],
   });
@@ -110,8 +110,8 @@ export class TransactionPageComponent {
   }
 
   get selectedProduct(): Product | undefined {
-    if (this.saleMethod === 'qrcode' && this.qrLookup) {
-      const product = this.qrLookup.product;
+    if (this.saleMethod === 'scan' && this.batchLookup) {
+      const product = this.batchLookup.product;
       return {
         _id: product.id,
         name: product.name,
@@ -159,8 +159,8 @@ export class TransactionPageComponent {
   }
 
   get maxSaleQuantityHint(): string {
-    if (this.saleMethod === 'qrcode' && this.qrLookup) {
-      return `Available: ${this.qrLookup.batch.displayRemainingQuantity} ${getUnitDisplayLabel(this.qrLookup.product.unit)}`;
+    if (this.saleMethod === 'scan' && this.batchLookup) {
+      return `Available: ${this.batchLookup.batch.displayRemainingQuantity} ${getUnitDisplayLabel(this.batchLookup.product.unit)}`;
     }
 
     const batch = this.selectedBatch;
@@ -179,45 +179,45 @@ export class TransactionPageComponent {
 
   setSaleMethod(method: SaleMethod): void {
     this.saleMethod = method;
-    this.saleForm.patchValue({ batch: '', qrCode: '' });
-    this.qrLookup = null;
-    this.qrLookupError = '';
+    this.saleForm.patchValue({ batch: '', batchNumber: '' });
+    this.batchLookup = null;
+    this.batchLookupError = '';
     this.errorMessage = '';
     this.updateQuantityValidators();
   }
 
   onBatchChange(): void {
-    this.qrLookup = null;
-    this.qrLookupError = '';
+    this.batchLookup = null;
+    this.batchLookupError = '';
     this.updateQuantityValidators();
   }
 
-  lookupQrCode(): void {
-    const qrCode = this.saleForm.controls.qrCode.value.trim();
+  lookupBatchNumber(): void {
+    const batchNumber = this.saleForm.controls.batchNumber.value.trim();
 
-    if (!qrCode) {
-      this.qrLookupError = 'Enter a QR code to lookup.';
+    if (!batchNumber) {
+      this.batchLookupError = 'Enter a batch number to lookup.';
       return;
     }
 
-    this.lookingUpQr = true;
-    this.qrLookupError = '';
-    this.qrLookup = null;
+    this.lookingUpBatch = true;
+    this.batchLookupError = '';
+    this.batchLookup = null;
 
-    this.inventoryService.getByQrCode(qrCode).subscribe({
+    this.inventoryService.getByBatchNumber(batchNumber).subscribe({
       next: (response) => {
-        this.lookingUpQr = false;
-        this.qrLookup = response.data;
+        this.lookingUpBatch = false;
+        this.batchLookup = response.data;
 
         if (!response.data.batch.canSell) {
-          this.qrLookupError = 'This batch cannot be sold (expired or depleted).';
+          this.batchLookupError = 'This batch cannot be sold (expired or depleted).';
         }
 
         this.updateQuantityValidators();
       },
       error: (error) => {
-        this.lookingUpQr = false;
-        this.qrLookupError = error.message ?? 'Batch not found for this QR code.';
+        this.lookingUpBatch = false;
+        this.batchLookupError = error.message ?? 'Batch not found.';
       },
     });
   }
@@ -240,9 +240,6 @@ export class TransactionPageComponent {
       : undefined;
   }
 
-  getUnitLabel(unit: ProductUnit): string {
-    return getUnitDisplayLabel(unit);
-  }
 
   getTransactionQuantity(transaction: Transaction): string {
     const product = this.getTransactionProduct(transaction);
@@ -276,20 +273,20 @@ export class TransactionPageComponent {
       return;
     }
 
-    if (this.saleMethod === 'qrcode') {
-      const qrCode = this.saleForm.controls.qrCode.value.trim();
+    if (this.saleMethod === 'scan') {
+      const batchNumber = this.saleForm.controls.batchNumber.value.trim();
 
-      if (!qrCode) {
-        this.errorMessage = 'Please enter a QR code.';
+      if (!batchNumber) {
+        this.errorMessage = 'Please enter a batch number.';
         return;
       }
 
-      if (!this.qrLookup) {
-        this.errorMessage = 'Please lookup the QR code before recording the sale.';
+      if (!this.batchLookup) {
+        this.errorMessage = 'Please lookup the batch before recording the sale.';
         return;
       }
 
-      if (!this.qrLookup.batch.canSell) {
+      if (!this.batchLookup.batch.canSell) {
         this.errorMessage = 'This batch cannot be sold.';
         return;
       }
@@ -302,7 +299,7 @@ export class TransactionPageComponent {
       return;
     }
 
-    const { batch, qrCode, quantity, remarks } = this.saleForm.getRawValue();
+    const { batch, batchNumber, quantity, remarks } = this.saleForm.getRawValue();
     const product = this.selectedProduct;
 
     if (!product || quantity == null || !isValidDisplayQuantity(quantity, product.unit)) {
@@ -318,7 +315,7 @@ export class TransactionPageComponent {
       ...(remarks ? { remarks } : {}),
       ...(this.saleMethod === 'batch'
         ? { batch }
-        : { qrCode: qrCode.trim() }),
+        : { batchNumber: batchNumber.trim() }),
     };
 
     this.saving = true;
@@ -327,8 +324,8 @@ export class TransactionPageComponent {
       next: () => {
         this.saving = false;
         this.toastr.success('Sale recorded successfully.', 'Success');
-        this.saleForm.reset({ batch: '', qrCode: '', quantity: null, remarks: '' });
-        this.qrLookup = null;
+        this.saleForm.reset({ batch: '', batchNumber: '', quantity: null, remarks: '' });
+        this.batchLookup = null;
         this.submitted = false;
         this.pageDataResource.reload();
         this.activeTab = 'list';
@@ -355,8 +352,8 @@ export class TransactionPageComponent {
     if (product) {
       let maxQuantity: number | undefined;
 
-      if (this.saleMethod === 'qrcode' && this.qrLookup) {
-        maxQuantity = this.qrLookup.batch.displayRemainingQuantity;
+      if (this.saleMethod === 'scan' && this.batchLookup) {
+        maxQuantity = this.batchLookup.batch.displayRemainingQuantity;
       } else if (this.selectedBatch) {
         maxQuantity = toDisplayQuantity(
           this.selectedBatch.remainingQuantity,

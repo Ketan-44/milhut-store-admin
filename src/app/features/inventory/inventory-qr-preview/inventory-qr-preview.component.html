@@ -8,7 +8,7 @@
 
   <div id="qr-print-area" class="qr-modal-body text-center">
     <p class="text-muted mb-1">Product</p>
-    <h6 class="mb-3">{{ preview().productName }}</h6>
+    <h6 class="mb-3">{{ preview().productName | titlecase }}</h6>
 
     <p class="text-muted mb-1">Batch Number</p>
     <h6 class="mb-3">{{ preview().batchNumber }}</h6>
@@ -30,7 +30,7 @@
       />
     }
 
-    <p class="qr-code-text mt-3 mb-0">{{ preview().qrCode }}</p>
+    <!-- <p class="qr-code-text mt-3 mb-0">{{ preview().batchNumber }}</p> -->
   </div>
 
   <div class="qr-modal-footer d-flex justify-content-end gap-2">

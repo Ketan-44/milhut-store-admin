@@ -10,8 +10,6 @@ export interface Inventory {
   remainingQuantity: number;
   parentBatch?: string;
   batchType: BatchType;
-  qrCode?: string;
-  qrGeneratedAt?: string;
   expiryDate: string;
   createdAt?: string;
   updatedAt?: string;
@@ -21,25 +19,16 @@ export interface CreateInventory {
   productId: string;
   quantity: number;
   parentBatch?: string;
-  batchType: BatchType;
+  batchType?: BatchType;
   expiryDate: string;
 }
 
-export interface GenerateQrResponse {
-  batchId: string;
-  batchNumber: string;
-  qrCode: string;
-  qrGeneratedAt: string;
-}
-
-export interface BatchQrLookup {
+export interface BatchLookup {
   batch: {
     id: string;
     batchNumber: string;
     batchType: BatchType;
     expiryDate: string;
-    qrCode?: string;
-    qrGeneratedAt?: string;
     remainingQuantity: number;
     displayRemainingQuantity: number;
     quantity: number;
