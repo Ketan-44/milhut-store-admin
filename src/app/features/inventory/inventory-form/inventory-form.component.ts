@@ -134,6 +134,10 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     return this.products.find((product) => product._id === parentBatch.productId);
   }
 
+  getProductName(productId: string): string {
+    return this.products.find((product) => product._id === productId)?.name ?? productId;
+  }
+
   get quantityUnit(): ProductUnit | undefined {
     return this.selectedProduct?.unit;
   }

@@ -69,7 +69,7 @@
                 <option value="" disabled>Select parent batch</option>
                 @for (batch of availableParentBatches; track batch._id) {
                   <option [value]="batch._id">
-                    {{ batch.batchNumber }} — {{ batch.batchType | titlecase }}
+                    {{ batch.batchNumber }} — {{ getProductName(batch.productId) | titlecase }} — {{ batch.batchType | titlecase }}
                   </option>
                 }
               </select>
