@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
-  z-index: 1050;
+  z-index: var(--z-modal-backdrop);
 }
 
 .qr-modal {
@@ -14,7 +14,7 @@
   background: #fff;
   border-radius: 0.75rem;
   box-shadow: 0 1rem 3rem rgba(15, 23, 42, 0.2);
-  z-index: 1051;
+  z-index: var(--z-modal);
 }
 
 .qr-modal-header,

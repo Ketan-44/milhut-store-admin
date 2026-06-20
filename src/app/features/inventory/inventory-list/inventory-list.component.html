@@ -5,6 +5,14 @@
   </div>
 
   <div class="card tbl-card">
+    <app-list-toolbar
+      [search]="debouncedSearch.searchInput()"
+      [limit]="limit()"
+      searchPlaceholder="Search by batch number, source, or product name"
+      (searchChange)="onSearchChange($event)"
+      (limitChange)="onLimitChange($event)"
+    />
+
     <div class="table-responsive inventory-table-wrapper">
       @if (inventoryResource.isLoading()) {
         <div class="p-4 text-muted">Loading inventory...</div>
@@ -14,22 +22,71 @@
         <table class="table table-hover mb-0 inventory-table">
           <thead>
             <tr>
-              <th class="col-batch-no">Batch No.</th>
+              <th class="col-batch-no">
+                <app-sortable-header
+                  label="Batch No."
+                  column="batchNumber"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
               <th class="col-product">Product</th>
-              <th class="col-type">Type</th>
-              <th class="col-quantity">Quantity</th>
-              <th class="col-quantity">Remaining</th>
-              <th class="col-expiry">Expiry</th>
+              <th class="col-type">
+                <app-sortable-header
+                  label="Type"
+                  column="batchType"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th class="col-quantity">
+                <app-sortable-header
+                  label="Quantity"
+                  column="quantity"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th class="col-quantity">
+                <app-sortable-header
+                  label="Remaining"
+                  column="remainingQuantity"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th class="col-source">
+                <app-sortable-header
+                  label="Source"
+                  column="sourceName"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th class="col-expiry">
+                <app-sortable-header
+                  label="Expiry"
+                  column="expiryDate"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
               <th class="col-status">Status</th>
               <th class="col-actions text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (batch of inventoryResource.value()?.batches ?? []; track batch._id) {
+            @for (batch of inventoryResource.value()?.items ?? []; track batch._id) {
               <tr>
                 <td>{{ batch.batchNumber }}</td>
                 <td>
-                  {{ getProductName(batch.productId, inventoryResource.value()!.products) | titlecase }}
+                  {{ getProductName(batch.productId, products) | titlecase }}
                 </td>
                 <td>{{ batch.batchType | titlecase }}</td>
                 <td>
@@ -37,7 +94,7 @@
                     getDisplayQuantity(
                       batch.quantity,
                       batch.productId,
-                      inventoryResource.value()!.products
+                      products
                     )
                   }}
                 </td>
@@ -46,37 +103,68 @@
                     getDisplayQuantity(
                       batch.remainingQuantity,
                       batch.productId,
-                      inventoryResource.value()!.products
+                      products
                     )
                   }}
                 </td>
-                <td class="text-nowrap">{{ batch.expiryDate | date: 'mediumDate' }}</td>
+                <td>{{ batch.sourceName || '—' }}</td>
+                <td class="text-nowrap">
+                  @if (batch.expiryDate) {
+                    {{ batch.expiryDate | date: 'mediumDate' }}
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
                 <td>
-                  @if (isExpired(batch.expiryDate)) {
+                  @if (batch.expiryDate && isExpired(batch.expiryDate)) {
                     <span class="badge text-bg-danger">Expired</span>
-                  } @else if (batch.remainingQuantity <= 0) {
-                    <span class="badge text-bg-warning">Depleted</span>
                   } @else {
                     <span class="badge text-bg-success">Available</span>
                   }
                 </td>
                 <td class="col-actions text-end">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary btn-sm"
-                    (click)="viewQr(batch)"
-                  >
-                    View QR
-                  </button>
+                  <div class="table-action-group inventory-actions">
+                    <app-table-icon-action
+                      icon="qrcode"
+                      title="View QR code"
+                      variant="primary"
+                      (actionClick)="viewQr(batch)"
+                    />
+                    <app-table-icon-action
+                      icon="edit"
+                      title="Edit batch"
+                      variant="secondary"
+                      [routerLink]="['/inventory', batch._id, 'edit']"
+                    />
+                    <app-table-icon-action
+                      icon="delete"
+                      title="Delete batch"
+                      variant="danger"
+                      [disabled]="deletingId() === batch._id"
+                      (actionClick)="deleteBatch(batch._id, batch.batchNumber)"
+                    />
+                  </div>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="text-center text-muted py-4">No inventory batches found.</td>
+                <td colspan="9" class="text-center text-muted py-4">
+                  @if (debouncedSearch.searchInput()) {
+                    No inventory batches match your search.
+                  } @else {
+                    No inventory batches found.
+                  }
+                </td>
               </tr>
             }
           </tbody>
         </table>
+
+        @if (inventoryResource.value()?.meta; as meta) {
+          <div class="px-3 pb-3">
+            <app-pagination [meta]="meta" (pageChange)="onPageChange($event)" />
+          </div>
+        }
       }
     </div>
   </div>

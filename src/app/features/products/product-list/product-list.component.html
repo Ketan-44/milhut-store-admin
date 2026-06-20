@@ -5,6 +5,14 @@
   </div>
 
   <div class="card tbl-card">
+    <app-list-toolbar
+      [search]="debouncedSearch.searchInput()"
+      [limit]="limit()"
+      searchPlaceholder="Search by product name"
+      (searchChange)="onSearchChange($event)"
+      (limitChange)="onLimitChange($event)"
+    />
+
     <div class="table-responsive">
       @if (productResource.isLoading()) {
         <div class="p-4 text-muted">Loading products...</div>
@@ -14,20 +22,61 @@
         <table class="table table-hover mb-0">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Unit</th>
-              <!-- <th>Low Stock Alert</th> -->
-              <th>Status</th>
+              <th>
+                <app-sortable-header
+                  label="Name"
+                  column="name"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Type"
+                  column="type"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Unit"
+                  column="unit"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Min Quantity"
+                  column="lowStockAlert"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Status"
+                  column="isActive"
+                  [sortBy]="sortBy()"
+                  [sortOrder]="sortOrder()"
+                  (sortClick)="onSort($event)"
+                />
+              </th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (product of productResource.value() ?? []; track product._id) {
+            @for (product of productResource.value()?.items ?? []; track product._id) {
               <tr>
                 <td>{{ product.name | titlecase }}</td>
                 <td>{{ product.type | titlecase }}</td>
                 <td>{{ product.unit | titlecase }}</td>
-                <!-- <td>{{ product.lowStockAlert }}</td> -->
+                <td>{{ getMinimumQuantityLabel(product) }}</td>
                 <td>
                   <span
                     class="badge"
@@ -39,14 +88,43 @@
                     {{ product.isActive ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
+                <td class="text-end">
+                  <div class="table-action-group">
+                    <app-table-icon-action
+                      icon="edit"
+                      title="Edit product"
+                      variant="secondary"
+                      [routerLink]="['/products', product._id, 'edit']"
+                    />
+                    <app-table-icon-action
+                      icon="delete"
+                      title="Delete product"
+                      variant="danger"
+                      [disabled]="deletingId() === product._id"
+                      (actionClick)="deleteProduct(product._id, product.name)"
+                    />
+                  </div>
+                </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="text-center text-muted py-4">No products found.</td>
+                <td colspan="6" class="text-center text-muted py-4">
+                  @if (debouncedSearch.searchInput()) {
+                    No products match your search.
+                  } @else {
+                    No products found.
+                  }
+                </td>
               </tr>
             }
           </tbody>
         </table>
+
+        @if (productResource.value()?.meta; as meta) {
+          <div class="px-3 pb-3">
+            <app-pagination [meta]="meta" (pageChange)="onPageChange($event)" />
+          </div>
+        }
       }
     </div>
   </div>

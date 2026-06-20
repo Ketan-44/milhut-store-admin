@@ -19,23 +19,23 @@ export interface NavigationItem {
 }
 
 export const NavigationItems: NavigationItem[] = [
-  // {
-  //   id: 'dashboard',
-  //   title: 'Dashboard',
-  //   type: 'group',
-  //   icon: 'icon-navigation',
-  //   children: [
-  //     {
-  //       id: 'default',
-  //       title: 'Default',
-  //       type: 'item',
-  //       classes: 'nav-item',
-  //       url: '/dashboard/default',
-  //       icon: 'dashboard',
-  //       breadcrumbs: false
-  //     }
-  //   ]
-  // },
+  {
+    id: 'dashboard',
+    title: 'Dashboard',
+    type: 'group',
+    icon: 'icon-navigation',
+    children: [
+      {
+        id: 'dashboard-page',
+        title: 'Dashboard',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/dashboard',
+        icon: 'dashboard',
+        breadcrumbs: false
+      }
+    ]
+  },
   {
     id: 'user',
     title: 'Users',

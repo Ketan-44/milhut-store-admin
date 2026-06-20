@@ -1,0 +1,52 @@
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid #eef1f4;
+  background: #fafbfc;
+}
+
+.list-toolbar-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.list-toolbar-search-icon {
+  color: #8c8c8c;
+  font-size: 1rem;
+  display: inline-flex;
+}
+
+.list-toolbar-search-input {
+  border-color: #e8ebee;
+
+  &:focus {
+    border-color: rgba(22, 119, 255, 0.45);
+    box-shadow: 0 0 0 0.2rem rgba(22, 119, 255, 0.08);
+  }
+}
+
+.list-toolbar-limit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.list-toolbar-limit-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #8c8c8c;
+}
+
+.list-toolbar-limit-select {
+  width: auto;
+  min-width: 72px;
+  border-color: #e8ebee;
+}

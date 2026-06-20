@@ -1,0 +1,516 @@
+<div class="col-md-12 dashboard-page">
+  <div class="dashboard-page-header mb-4">
+    <div>
+      <h5 class="dashboard-page-title mb-1">Dashboard</h5>
+      <p class="dashboard-page-subtitle mb-0">
+        Overview of inventory, purchases, production, and sales.
+      </p>
+    </div>
+  </div>
+
+  <div class="dashboard-date-filter dashboard-date-filter-horizontal mb-4">
+    <div class="dashboard-date-filter-copy">
+      <h6 class="dashboard-date-filter-title mb-1">Date Filter</h6>
+      <p class="dashboard-date-filter-hint mb-0">
+        Applies to stats, purchased inventory, production, and sales.
+      </p>
+    </div>
+
+    <div class="dashboard-date-filter-fields">
+      <div class="dashboard-date-filter-field">
+        <label class="form-label" for="startDate">From</label>
+        <input
+          id="startDate"
+          type="date"
+          class="form-control form-control-sm"
+          [ngModel]="startDate()"
+          (ngModelChange)="startDate.set($event)"
+        />
+      </div>
+
+      <div class="dashboard-date-filter-field">
+        <label class="form-label" for="endDate">To</label>
+        <input
+          id="endDate"
+          type="date"
+          class="form-control form-control-sm"
+          [ngModel]="endDate()"
+          (ngModelChange)="endDate.set($event)"
+        />
+      </div>
+    </div>
+
+    <div class="dashboard-date-filter-actions">
+      <button type="button" class="btn btn-primary btn-sm" (click)="applyDateFilter()">
+        Apply Filter
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setDatePreset(7)">
+        Last 7 days
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="setDatePreset(30)">
+        Last 30 days
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-3 dashboard-stats-row mb-4">
+    @if (statsResource.isLoading()) {
+      @for (placeholder of [1, 2, 3, 4]; track placeholder) {
+        <div class="col-xl-3 col-md-6">
+          <app-dashboard-stat-card
+            title="Loading"
+            [value]="0"
+            [loading]="true"
+          />
+        </div>
+      }
+    } @else if (statsResource.hasValue()) {
+      @if (statsResource.value(); as stats) {
+        <div class="col-xl-3 col-md-6">
+          <app-dashboard-stat-card
+            [title]="stats.productsInStock.title"
+            [value]="stats.productsInStock.value"
+            [trend]="stats.productsInStock.trend"
+            [changePercent]="stats.productsInStock.changePercent"
+            [footerHighlight]="stats.productsInStock.footerHighlight"
+            [footerText]="stats.productsInStock.footerText"
+            footerVariant="inventory"
+          />
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <app-dashboard-stat-card
+            [title]="stats.purchased.title"
+            [value]="stats.purchased.value"
+            [trend]="stats.purchased.trend"
+            [changePercent]="stats.purchased.changePercent"
+            [footerHighlight]="stats.purchased.footerHighlight"
+            [footerText]="stats.purchased.footerText"
+          />
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <app-dashboard-stat-card
+            [title]="stats.production.title"
+            [value]="stats.production.value"
+            [trend]="stats.production.trend"
+            [changePercent]="stats.production.changePercent"
+            [footerHighlight]="stats.production.footerHighlight"
+            [footerText]="stats.production.footerText"
+          />
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <app-dashboard-stat-card
+            [title]="stats.sales.title"
+            [value]="stats.sales.value"
+            [trend]="stats.sales.trend"
+            [changePercent]="stats.sales.changePercent"
+            [footerHighlight]="stats.sales.footerHighlight"
+            [footerText]="stats.sales.footerText"
+          />
+        </div>
+      }
+    }
+  </div>
+
+  <app-card cardTitle="Live Inventory" cardClass="dashboard-section-card mb-4" [padding]="0">
+    <ng-template #headerOptionsTemplate>
+      <button
+        type="button"
+        class="btn btn-outline-success btn-sm dashboard-export-btn"
+        [disabled]="liveExporting()"
+        (click)="exportLiveInventory()"
+      >
+        @if (liveExporting()) {
+          Exporting...
+        } @else {
+          Export to Excel
+        }
+      </button>
+    </ng-template>
+
+    <app-list-toolbar
+      [search]="liveDebouncedSearch.searchInput()"
+      [limit]="liveLimit()"
+      searchPlaceholder="Search by product name"
+      (searchChange)="onLiveSearchChange($event)"
+      (limitChange)="onLiveLimitChange($event)"
+    />
+
+    @if (liveInventoryResource.isLoading()) {
+      <div class="p-4 text-muted">Loading live inventory...</div>
+    } @else if (liveInventoryResource.error()) {
+      <div class="p-4 text-danger">Failed to load live inventory.</div>
+    } @else if (liveInventoryResource.hasValue()) {
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 dashboard-table">
+          <thead>
+            <tr>
+              <th>
+                <app-sortable-header
+                  label="Product"
+                  column="productName"
+                  [sortBy]="liveSortBy()"
+                  [sortOrder]="liveSortOrder()"
+                  (sortClick)="onLiveSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Type"
+                  column="productType"
+                  [sortBy]="liveSortBy()"
+                  [sortOrder]="liveSortOrder()"
+                  (sortClick)="onLiveSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Available Quantity"
+                  column="displayAvailableQuantity"
+                  [sortBy]="liveSortBy()"
+                  [sortOrder]="liveSortOrder()"
+                  (sortClick)="onLiveSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Minimum"
+                  column="displayLowStockAlert"
+                  [sortBy]="liveSortBy()"
+                  [sortOrder]="liveSortOrder()"
+                  (sortClick)="onLiveSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Batches"
+                  column="batchCount"
+                  [sortBy]="liveSortBy()"
+                  [sortOrder]="liveSortOrder()"
+                  (sortClick)="onLiveSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Status"
+                  column="isLowStock"
+                  [sortBy]="liveSortBy()"
+                  [sortOrder]="liveSortOrder()"
+                  (sortClick)="onLiveSort($event)"
+                />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of liveInventoryResource.value()?.items ?? []; track item.productId) {
+              <tr>
+                <td>{{ item.productName | titlecase }}</td>
+                <td>{{ item.productType | titlecase }}</td>
+                <td>{{ getLiveQuantityLabel(item) }}</td>
+                <td>
+                  @if (item.displayLowStockAlert > 0) {
+                    {{ getMinimumQuantityLabel(item) }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>{{ item.batchCount }}</td>
+                <td>
+                  @if (item.isLowStock) {
+                    <span class="badge text-bg-danger">Low Stock</span>
+                  } @else {
+                    <span class="badge text-bg-success">Available</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  @if (liveDebouncedSearch.searchInput()) {
+                    No products match your search.
+                  } @else {
+                    No inventory available.
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (liveInventoryResource.value()?.meta; as meta) {
+        <div class="px-3 pb-3">
+          <app-pagination [meta]="meta" (pageChange)="onLivePageChange($event)" />
+        </div>
+      }
+    }
+  </app-card>
+
+  <div class="dashboard-cards-stack">
+      <app-card cardTitle="Purchased Inventory" cardClass="dashboard-section-card" [padding]="0">
+        <ng-template #headerOptionsTemplate>
+          <button
+            type="button"
+            class="btn btn-outline-success btn-sm dashboard-export-btn"
+            [disabled]="purchasedExporting()"
+            (click)="exportPurchasedInventory()"
+          >
+            @if (purchasedExporting()) {
+              Exporting...
+            } @else {
+              Export to Excel
+            }
+          </button>
+        </ng-template>
+
+        <p class="dashboard-card-hint">
+          Select a row to trace whether that purchased batch was used in production.
+        </p>
+
+        @if (purchasedInventoryResource.isLoading()) {
+          <div class="p-4 text-muted">Loading purchased inventory...</div>
+        } @else if (purchasedInventoryResource.error()) {
+          <div class="p-4 text-danger">Failed to load purchased inventory.</div>
+        } @else if (purchasedInventoryResource.hasValue()) {
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 dashboard-table">
+              <thead>
+                <tr>
+                  <th>
+                    <app-sortable-header
+                      label="Date"
+                      column="createdAt"
+                      [sortBy]="purchasedSortBy()"
+                      [sortOrder]="purchasedSortOrder()"
+                      (sortClick)="onPurchasedSort($event)"
+                    />
+                  </th>
+                  <th>Product</th>
+                  <th>Batch</th>
+                  <th>
+                    <app-sortable-header
+                      label="Quantity"
+                      column="quantity"
+                      [sortBy]="purchasedSortBy()"
+                      [sortOrder]="purchasedSortOrder()"
+                      (sortClick)="onPurchasedSort($event)"
+                    />
+                  </th>
+                  <th>Performed By</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (transaction of purchasedInventoryResource.value()?.items ?? []; track transaction._id) {
+                  <tr
+                    [class.table-active]="selectedPurchasedItem()?.batchId === getTransactionBatch(transaction)?._id"
+                  >
+                    <td class="text-nowrap">{{ transaction.createdAt | date: 'medium' }}</td>
+                    <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
+                    <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
+                    <td>{{ getTransactionQuantity(transaction) }}</td>
+                    <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
+                    <td class="text-end">
+                      <app-table-icon-action
+                        icon="node-index"
+                        title="View in production"
+                        variant="primary"
+                        (actionClick)="selectPurchasedItem(transaction)"
+                      />
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                      No purchased inventory found for the selected dates.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (purchasedInventoryResource.value()?.meta; as meta) {
+            <div class="px-3 pb-3">
+              <app-pagination [meta]="meta" (pageChange)="onPurchasedPageChange($event)" />
+            </div>
+          }
+        }
+      </app-card>
+
+      <div #productionCard class="dashboard-card-anchor">
+        <app-card
+          cardTitle="Production"
+          cardClass="dashboard-section-card"
+          [headerClass]="selectedPurchasedItem() ? 'dashboard-card-header-highlight' : ''"
+          [padding]="0"
+        >
+          <ng-template #headerOptionsTemplate>
+            <button
+              type="button"
+              class="btn btn-outline-success btn-sm dashboard-export-btn"
+              [disabled]="productionExporting()"
+              (click)="exportProduction()"
+            >
+              @if (productionExporting()) {
+                Exporting...
+              } @else {
+                Export to Excel
+              }
+            </button>
+          </ng-template>
+
+          @if (selectedPurchasedItem(); as selected) {
+            <div class="dashboard-inline-filter">
+              <span>
+                Filtered by batch <strong>{{ selected.batchNumber }}</strong>
+                ({{ selected.productName | titlecase }}).
+              </span>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearPurchasedSelection()">
+                Clear
+              </button>
+            </div>
+          }
+
+          @if (productionResource.isLoading()) {
+            <div class="p-4 text-muted">Loading production data...</div>
+          } @else if (productionResource.error()) {
+            <div class="p-4 text-danger">Failed to load production data.</div>
+          } @else if (productionResource.hasValue()) {
+            <div class="table-responsive">
+              <table class="table table-hover mb-0 dashboard-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <app-sortable-header
+                        label="Date"
+                        column="createdAt"
+                        [sortBy]="productionSortBy()"
+                        [sortOrder]="productionSortOrder()"
+                        (sortClick)="onProductionSort($event)"
+                      />
+                    </th>
+                    <th>Product</th>
+                    <th>Output Batch</th>
+                    <th>Produced From</th>
+                    <th>
+                      <app-sortable-header
+                        label="Quantity"
+                        column="quantity"
+                        [sortBy]="productionSortBy()"
+                        [sortOrder]="productionSortOrder()"
+                        (sortClick)="onProductionSort($event)"
+                      />
+                    </th>
+                    <th>Performed By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (transaction of productionResource.value()?.items ?? []; track transaction._id) {
+                    <tr>
+                      <td class="text-nowrap">{{ transaction.createdAt | date: 'medium' }}</td>
+                      <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
+                      <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
+                      <td>{{ getProducedFromLabel(transaction) }}</td>
+                      <td>{{ getTransactionQuantity(transaction) }}</td>
+                      <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="6" class="text-center text-muted py-4">
+                        No production records found for the selected dates.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if (productionResource.value()?.meta; as meta) {
+              <div class="px-3 pb-3">
+                <app-pagination [meta]="meta" (pageChange)="onProductionPageChange($event)" />
+              </div>
+            }
+          }
+        </app-card>
+      </div>
+
+      <app-card cardTitle="Sales" cardClass="dashboard-section-card" [padding]="0">
+        <ng-template #headerOptionsTemplate>
+          <button
+            type="button"
+            class="btn btn-outline-success btn-sm dashboard-export-btn"
+            [disabled]="salesExporting()"
+            (click)="exportSales()"
+          >
+            @if (salesExporting()) {
+              Exporting...
+            } @else {
+              Export to Excel
+            }
+          </button>
+        </ng-template>
+
+        @if (salesResource.isLoading()) {
+          <div class="p-4 text-muted">Loading sales data...</div>
+        } @else if (salesResource.error()) {
+          <div class="p-4 text-danger">Failed to load sales data.</div>
+        } @else if (salesResource.hasValue()) {
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 dashboard-table">
+              <thead>
+                <tr>
+                  <th>
+                    <app-sortable-header
+                      label="Date"
+                      column="createdAt"
+                      [sortBy]="salesSortBy()"
+                      [sortOrder]="salesSortOrder()"
+                      (sortClick)="onSalesSort($event)"
+                    />
+                  </th>
+                  <th>Product</th>
+                  <th>Batch</th>
+                  <th>
+                    <app-sortable-header
+                      label="Quantity"
+                      column="quantity"
+                      [sortBy]="salesSortBy()"
+                      [sortOrder]="salesSortOrder()"
+                      (sortClick)="onSalesSort($event)"
+                    />
+                  </th>
+                  <th>Performed By</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (transaction of salesResource.value()?.items ?? []; track transaction._id) {
+                  <tr>
+                    <td class="text-nowrap">{{ transaction.createdAt | date: 'medium' }}</td>
+                    <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
+                    <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
+                    <td>{{ getTransactionQuantity(transaction) }}</td>
+                    <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
+                    <td>{{ transaction.remarks ?? '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                      No sales found for the selected dates.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (salesResource.value()?.meta; as meta) {
+            <div class="px-3 pb-3">
+              <app-pagination [meta]="meta" (pageChange)="onSalesPageChange($event)" />
+            </div>
+          }
+        }
+      </app-card>
+  </div>
+
+</div>

@@ -1,12 +1,12 @@
 <div class="col-md-12">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">Add Recipe</h5>
+    <h5 class="mb-0">{{ isEditMode ? 'Edit Recipe' : 'Add Recipe' }}</h5>
     <a routerLink="/production" class="btn btn-outline-secondary btn-sm">Back</a>
   </div>
 
   <div class="card">
     <div class="card-body">
-      @if (formDataResource.isLoading()) {
+      @if (formDataResource.isLoading() || loadingRecipe) {
         <div class="text-muted">Loading form data...</div>
       } @else if (formDataResource.error()) {
         <div class="text-danger">Failed to load form data.</div>
@@ -126,7 +126,7 @@
 
           <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary" [disabled]="saving">
-              {{ saving ? 'Saving...' : 'Create Recipe' }}
+              {{ saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Create Recipe') }}
             </button>
             <a routerLink="/production" class="btn btn-outline-secondary">Cancel</a>
           </div>

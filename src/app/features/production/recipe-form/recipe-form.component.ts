@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import {
   FormArray,
@@ -8,10 +8,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { resource } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { firstValueFrom } from 'rxjs';
 import { Product } from '../../products/models/product.model';
 import { ProductType } from '../../products/models/product-type.enum';
 import { ProductUnit } from '../../products/models/product-unit.enum';
@@ -36,12 +35,17 @@ type IngredientFormGroup = FormGroup<{
   templateUrl: './recipe-form.component.html',
   styleUrl: './recipe-form.component.scss',
 })
-export class RecipeFormComponent {
+export class RecipeFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private recipeService = inject(RecipeService);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+
+  recipeId: string | null = null;
+  isEditMode = false;
+  loadingRecipe = false;
 
   submitted = false;
   saving = false;
@@ -49,13 +53,17 @@ export class RecipeFormComponent {
 
   formDataResource = resource({
     loader: async () => {
-      const response = await firstValueFrom(this.productService.get());
+      const products = await this.productService.getAllItems();
 
       return {
-        finishedProducts: response.data.filter(
+        finishedProducts: products.filter(
           (product) => product.type === ProductType.FINISHED,
         ),
-        ingredientProducts: response.data,
+        ingredientProducts: products.filter(
+          (product) =>
+            product.type === ProductType.RAW ||
+            product.type === ProductType.FINISHED,
+        ),
       };
     },
   });
@@ -65,6 +73,45 @@ export class RecipeFormComponent {
     finishedProductId: ['', Validators.required],
     ingredients: this.fb.array([this.createIngredientGroup()]),
   });
+
+  ngOnInit(): void {
+    this.recipeId = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!this.recipeId;
+
+    if (this.isEditMode && this.recipeId) {
+      this.loadingRecipe = true;
+
+      this.recipeService.getById(this.recipeId).subscribe({
+        next: (response) => {
+          this.loadingRecipe = false;
+          this.recipeForm.patchValue({
+            name: response.data.name,
+            finishedProductId: response.data.finishedProductId,
+          });
+
+          this.ingredients.clear();
+
+          for (const ingredient of response.data.ingredients ?? []) {
+            this.ingredients.push(
+              this.fb.nonNullable.group({
+                productId: [ingredient.productId, Validators.required],
+                quantity: [ingredient.quantity, [Validators.required, Validators.min(0.001)]],
+              }),
+            );
+          }
+
+          if (this.ingredients.length === 0) {
+            this.ingredients.push(this.createIngredientGroup());
+          }
+        },
+        error: (error) => {
+          this.loadingRecipe = false;
+          this.errorMessage = error.message ?? 'Failed to load recipe.';
+          this.toastr.error(this.errorMessage, 'Error');
+        },
+      });
+    }
+  }
 
   get f() {
     return this.recipeForm.controls;
@@ -161,15 +208,25 @@ export class RecipeFormComponent {
 
     this.saving = true;
 
-    this.recipeService.create(payload).subscribe({
+    const request$ =
+      this.isEditMode && this.recipeId
+        ? this.recipeService.update(this.recipeId, payload)
+        : this.recipeService.create(payload);
+
+    request$.subscribe({
       next: () => {
         this.saving = false;
-        this.toastr.success('Recipe created successfully.', 'Success');
+        this.toastr.success(
+          this.isEditMode ? 'Recipe updated successfully.' : 'Recipe created successfully.',
+          'Success',
+        );
         this.router.navigate(['/production']);
       },
       error: (error) => {
         this.saving = false;
-        this.errorMessage = error.message ?? 'Failed to create recipe.';
+        this.errorMessage =
+          error.message ??
+          (this.isEditMode ? 'Failed to update recipe.' : 'Failed to create recipe.');
         this.toastr.error(this.errorMessage, 'Error');
       },
     });

@@ -1,3 +1,5 @@
+import { BatchType } from '../../inventory/models/batch-type.enum';
+
 export interface CreateProduction {
   recipeId: string;
   outputQuantity: number;
@@ -16,7 +18,7 @@ export interface ProductionResult {
     productId: string;
     quantity: number;
     remainingQuantity: number;
-    batchType: string;
+    batchType: BatchType;
     expiryDate: string;
   };
   outputQuantity: number;
@@ -29,4 +31,5 @@ export interface ProductionResult {
       quantity: number;
     }>;
   }>;
+  transactionId: string;
 }

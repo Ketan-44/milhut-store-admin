@@ -37,3 +37,70 @@
   // background-color: transparentize($primary, 0.97);
   background-color: $gray-200;
 }
+
+.table-action-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.table-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: $gray-600;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  i,
+  .anticon {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: $gray-200;
+    color: $gray-800;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    color: $primary;
+
+    &:hover:not(:disabled) {
+      background-color: rgba($primary, 0.1);
+      color: $primary;
+    }
+  }
+
+  &--secondary {
+    color: $gray-600;
+
+    &:hover:not(:disabled) {
+      background-color: $gray-200;
+      color: $gray-800;
+    }
+  }
+
+  &--danger {
+    color: $danger;
+
+    &:hover:not(:disabled) {
+      background-color: rgba($danger, 0.1);
+      color: $danger;
+    }
+  }
+}

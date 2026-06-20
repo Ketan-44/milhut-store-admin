@@ -1,0 +1,61 @@
+<div class="dashboard-stat-card">
+  @if (loading()) {
+    <div class="dashboard-stat-card-loading text-muted">Loading...</div>
+  } @else {
+    <p class="dashboard-stat-card-title">{{ title() }}</p>
+
+    <div class="dashboard-stat-card-value-row">
+      <span class="dashboard-stat-card-value">{{ value() | number }}</span>
+      <span class="dashboard-stat-card-badge" [class]="'trend-' + trend()">
+        @if (trend() === 'up') {
+          <span antIcon type="rise" theme="outline"></span>
+        } @else if (trend() === 'down') {
+          <span antIcon type="fall" theme="outline"></span>
+        } @else {
+          <span antIcon type="minus" theme="outline"></span>
+        }
+        {{ trendLabel() }}
+      </span>
+    </div>
+
+    @if (footerText()) {
+      <p class="dashboard-stat-card-footer">
+        @if (footerVariant() === 'inventory') {
+          @if (footerHighlight() === 0 || footerHighlight() === '0') {
+            {{ footerText() }}
+          } @else {
+            <span class="dashboard-stat-card-footer-highlight" [class]="'trend-' + trend()">
+              @if (typeof footerHighlight() === 'number') {
+                {{ footerHighlight() | number }}
+              } @else {
+                {{ footerHighlight() }}
+              }
+            </span>
+            {{ footerText() }}
+          }
+        } @else if (trend() === 'up' && changePercent() > 0) {
+          You recorded an extra
+          <span class="dashboard-stat-card-footer-highlight trend-up">
+            @if (typeof footerHighlight() === 'number') {
+              {{ footerHighlight() | number }}
+            } @else {
+              {{ footerHighlight() }}
+            }
+          </span>
+          {{ footerText() }}
+        } @else if (trend() === 'down' && changePercent() > 0) {
+          <span class="dashboard-stat-card-footer-highlight trend-down">
+            @if (typeof footerHighlight() === 'number') {
+              {{ footerHighlight() | number }}
+            } @else {
+              {{ footerHighlight() }}
+            }
+          </span>
+          {{ footerText() }}
+        } @else {
+          {{ footerText() }}
+        }
+      </p>
+    }
+  }
+</div>

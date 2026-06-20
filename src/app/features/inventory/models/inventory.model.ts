@@ -8,9 +8,9 @@ export interface Inventory {
   productId: string;
   quantity: number;
   remainingQuantity: number;
-  parentBatch?: string;
   batchType: BatchType;
-  expiryDate: string;
+  expiryDate?: string;
+  sourceName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -18,9 +18,14 @@ export interface Inventory {
 export interface CreateInventory {
   productId: string;
   quantity: number;
-  parentBatch?: string;
   batchType?: BatchType;
-  expiryDate: string;
+  expiryDate?: string;
+  sourceName?: string;
+}
+
+export interface UpdateInventory {
+  expiryDate?: string | null;
+  sourceName?: string | null;
 }
 
 export interface BatchLookup {
@@ -28,7 +33,8 @@ export interface BatchLookup {
     id: string;
     batchNumber: string;
     batchType: BatchType;
-    expiryDate: string;
+    expiryDate?: string | null;
+    sourceName?: string | null;
     remainingQuantity: number;
     displayRemainingQuantity: number;
     quantity: number;

@@ -113,7 +113,7 @@ strong {
 
 // modal box select
 .ng-dropdown-panel.ng-select-bottom {
-  z-index: 1099;
+  z-index: var(--z-dropdown);
 }
 
 /* ================================    Blockquote Start  ===================== */

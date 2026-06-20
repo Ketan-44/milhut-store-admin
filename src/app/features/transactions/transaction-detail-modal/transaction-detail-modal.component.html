@@ -1,0 +1,101 @@
+<div class="detail-modal-backdrop" (click)="close()"></div>
+
+<div class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-detail-title">
+  <div class="detail-modal-header d-flex justify-content-between align-items-center">
+    <h5 id="transaction-detail-title" class="mb-0">Transaction Details</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+  </div>
+
+  <div class="detail-modal-body">
+    @if (loading()) {
+      <div class="text-muted">Loading transaction...</div>
+    } @else if (error()) {
+      <div class="text-danger">{{ error() }}</div>
+    } @else if (transaction(); as item) {
+      <div class="detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Date</span>
+          <span>{{ item.createdAt | date: 'medium' }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Type</span>
+          <span>
+            <span class="badge" [class]="getTypeBadgeClass(item.type)">
+              {{ item.type | titlecase }}
+            </span>
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Product</span>
+          <span>{{ (getProduct(item)?.name ?? '—') | titlecase }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Quantity</span>
+          <span>{{ getTransactionQuantity(item) }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Performed By</span>
+          <span>{{ getUser(item)?.name ?? '—' }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Remarks</span>
+          <span>{{ item.remarks ?? '—' }}</span>
+        </div>
+
+        @if (getBatch(item); as batch) {
+          <div class="detail-row">
+            <span class="detail-label">Batch</span>
+            <span>{{ batch.batchNumber }} ({{ batch.batchType | titlecase }})</span>
+          </div>
+
+          @if (batch.expiryDate) {
+            <div class="detail-row">
+              <span class="detail-label">Expiry</span>
+              <span>{{ batch.expiryDate | date: 'mediumDate' }}</span>
+            </div>
+          }
+
+          @if (batch.quantity !== undefined) {
+            <div class="detail-row">
+              <span class="detail-label">Batch Qty</span>
+              <span>
+                {{ getBatchQuantity(item) }}
+                <span class="text-muted">(remaining: {{ getBatchRemaining(item) }})</span>
+              </span>
+            </div>
+          }
+
+          @if (batch.producedFrom?.length) {
+            <div>
+              <span class="detail-label d-block mb-2">Produced From</span>
+              <ul class="produced-from-list mb-0">
+                @for (consumption of batch.producedFrom; track consumption.productId) {
+                  <li class="mb-2">
+                    <strong>{{ consumption.productName | titlecase }}</strong>
+                    <ul class="produced-from-list mt-1 mb-0">
+                      @for (sourceBatch of consumption.batches; track sourceBatch.batchId) {
+                        <li>
+                          {{ sourceBatch.batchNumber }} —
+                          {{ getIngredientQuantity(consumption.productId, sourceBatch.quantity) }}
+                        </li>
+                      }
+                    </ul>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <div class="detail-modal-footer d-flex justify-content-end">
+    <button type="button" class="btn btn-secondary" (click)="close()">Close</button>
+  </div>
+</div>

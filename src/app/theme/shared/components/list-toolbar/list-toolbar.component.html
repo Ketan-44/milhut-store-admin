@@ -1,0 +1,27 @@
+<div class="list-toolbar">
+  <div class="list-toolbar-search">
+    <span antIcon type="search" theme="outline" class="list-toolbar-search-icon"></span>
+    <input
+      type="search"
+      class="form-control form-control-sm list-toolbar-search-input"
+      [placeholder]="searchPlaceholder()"
+      [ngModel]="search()"
+      (ngModelChange)="onSearchChange($event)"
+    />
+  </div>
+
+  <div class="list-toolbar-limit">
+    <label class="list-toolbar-limit-label" [attr.for]="limitSelectId">Show</label>
+    <select
+      [id]="limitSelectId"
+      class="form-select form-select-sm list-toolbar-limit-select"
+      [ngModel]="limit()"
+      (ngModelChange)="onLimitChange($event)"
+    >
+      @for (option of limitOptions(); track option) {
+        <option [ngValue]="option">{{ option }}</option>
+      }
+    </select>
+    <span class="list-toolbar-limit-label">entries</span>
+  </div>
+</div>

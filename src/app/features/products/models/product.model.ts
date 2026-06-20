@@ -17,4 +17,13 @@ export interface CreateProduct {
   name: string;
   type: ProductType;
   unit: ProductUnit;
+  lowStockAlert?: number;
+}
+
+export interface UpdateProduct {
+  name?: string;
+  type?: ProductType;
+  unit?: ProductUnit;
+  lowStockAlert?: number;
+  isActive?: boolean;
 }

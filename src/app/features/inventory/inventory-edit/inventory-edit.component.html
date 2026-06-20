@@ -1,0 +1,77 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Edit Batch</h5>
+    <a routerLink="/inventory" class="btn btn-outline-secondary btn-sm">Back to List</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      @if (batchResource.isLoading()) {
+        <div class="text-muted">Loading batch...</div>
+      } @else if (batchResource.error()) {
+        <div class="text-danger">{{ loadErrorMessage }}</div>
+      } @else if (batchResource.hasValue()) {
+        <div class="mb-3">
+          <div><strong>Batch:</strong> {{ batchResource.value()!.batch.batchNumber }}</div>
+          <div>
+            <strong>Product:</strong> {{ batchResource.value()!.product.name | titlecase }}
+          </div>
+        </div>
+
+        <form [formGroup]="inventoryForm" (ngSubmit)="onSubmit()">
+          <div class="form-group mb-3">
+            <label class="form-label" for="sourceName">Source Name</label>
+            <input
+              type="text"
+              id="sourceName"
+              class="form-control"
+              placeholder="Supplier or source (optional)"
+              formControlName="sourceName"
+              maxlength="200"
+              [class.is-invalid]="f.sourceName.invalid && (f.sourceName.touched || submitted)"
+            />
+
+            @if (f.sourceName.invalid && (f.sourceName.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.sourceName.errors?.['maxlength']) {
+                  <div>Source name cannot exceed 200 characters.</div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="expiryDate">Expiry Date <span class="text-muted">(optional)</span></label>
+            <input
+              type="date"
+              id="expiryDate"
+              class="form-control"
+              formControlName="expiryDate"
+              [min]="minExpiryDate"
+              [class.is-invalid]="f.expiryDate.invalid && (f.expiryDate.touched || submitted)"
+            />
+
+            @if (f.expiryDate.invalid && (f.expiryDate.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.expiryDate.errors?.['minDate']) {
+                  <div>Expiry date cannot be in the past.</div>
+                }
+              </div>
+            }
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          }
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Update Batch' }}
+            </button>
+            <a routerLink="/inventory" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+</div>

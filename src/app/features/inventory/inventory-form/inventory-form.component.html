@@ -28,67 +28,14 @@
               }
             </select>
 
+            @if (batchTypeHint) {
+              <small class="text-muted d-block mt-1">{{ batchTypeHint }}</small>
+            }
+
             @if (f.productId.invalid && (f.productId.touched || submitted)) {
               <div class="invalid-feedback">Product is required.</div>
             }
           </div>
-
-          @if (showSourceTypeDropdown) {
-            <div class="form-group mb-3">
-              <label class="form-label" for="sourceType">Source</label>
-              <select
-                id="sourceType"
-                class="form-select"
-                formControlName="sourceType"
-                [class.is-invalid]="f.sourceType.invalid && (f.sourceType.touched || submitted)"
-              >
-                @for (type of sourceTypeOptions; track type) {
-                  <option [value]="type">{{ type | titlecase }}</option>
-                }
-              </select>
-
-              @if (sourceTypeHint) {
-                <small class="text-muted d-block mt-1">{{ sourceTypeHint }}</small>
-              }
-
-              @if (f.sourceType.invalid && (f.sourceType.touched || submitted)) {
-                <div class="invalid-feedback">Source is required.</div>
-              }
-            </div>
-          }
-
-          @if (showParentBatchField) {
-            <div class="form-group mb-3">
-              <label class="form-label" for="parentBatch">Parent Batch</label>
-              <select
-                id="parentBatch"
-                class="form-select"
-                formControlName="parentBatch"
-                [class.is-invalid]="f.parentBatch.invalid && (f.parentBatch.touched || submitted)"
-              >
-                <option value="" disabled>Select parent batch</option>
-                @for (batch of availableParentBatches; track batch._id) {
-                  <option [value]="batch._id">
-                    {{ batch.batchNumber }} — {{ getProductName(batch.productId) | titlecase }} — {{ batch.batchType | titlecase }}
-                  </option>
-                }
-              </select>
-
-              @if (parentBatchHint) {
-                <small class="text-muted d-block mt-1">{{ parentBatchHint }}</small>
-              }
-
-              @if (f.parentBatch.invalid && (f.parentBatch.touched || submitted)) {
-                <div class="invalid-feedback">Parent batch is required.</div>
-              }
-
-              @if (availableParentBatches.length === 0) {
-                <small class="text-warning d-block mt-1">
-                  No eligible parent batches with remaining quantity.
-                </small>
-              }
-            </div>
-          }
 
           <div class="form-group mb-3">
             <label class="form-label" for="quantity">{{ quantityLabel }}</label>
@@ -108,10 +55,6 @@
               <small class="text-muted d-block mt-1">{{ quantityHint }}</small>
             }
 
-            @if (maxParentQuantityHint) {
-              <small class="text-muted d-block mt-1">{{ maxParentQuantityHint }}</small>
-            }
-
             @if (f.quantity.invalid && (f.quantity.touched || submitted)) {
               <div class="invalid-feedback">
                 @if (f.quantity.errors?.['required']) {
@@ -123,25 +66,48 @@
                 @if (f.quantity.errors?.['integer']) {
                   <div>Quantity must be a whole number for piece products.</div>
                 }
-                @if (f.quantity.errors?.['max']) {
-                  <div>Quantity cannot exceed available parent batch quantity.</div>
+              </div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="sourceName">Source Name</label>
+            <input
+              type="text"
+              id="sourceName"
+              class="form-control"
+              placeholder="Supplier or source (optional)"
+              formControlName="sourceName"
+              maxlength="200"
+              [class.is-invalid]="f.sourceName.invalid && (f.sourceName.touched || submitted)"
+            />
+
+            @if (f.sourceName.invalid && (f.sourceName.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.sourceName.errors?.['maxlength']) {
+                  <div>Source name cannot exceed 200 characters.</div>
                 }
               </div>
             }
           </div>
 
           <div class="form-group mb-3">
-            <label class="form-label" for="expiryDate">Expiry Date</label>
+            <label class="form-label" for="expiryDate">Expiry Date <span class="text-muted">(optional)</span></label>
             <input
               type="date"
               id="expiryDate"
               class="form-control"
               formControlName="expiryDate"
+              [min]="minExpiryDate"
               [class.is-invalid]="f.expiryDate.invalid && (f.expiryDate.touched || submitted)"
             />
 
             @if (f.expiryDate.invalid && (f.expiryDate.touched || submitted)) {
-              <div class="invalid-feedback">Expiry date is required.</div>
+              <div class="invalid-feedback">
+                @if (f.expiryDate.errors?.['minDate']) {
+                  <div>Expiry date cannot be in the past.</div>
+                }
+              </div>
             }
           </div>
 

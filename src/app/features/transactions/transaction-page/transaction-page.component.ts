@@ -1,9 +1,20 @@
-import { Component, inject, resource } from '@angular/core';
+import { Component, inject, OnInit, resource, signal } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
-import { firstValueFrom } from 'rxjs';
+import { map } from 'rxjs';
+import { PaginationComponent } from 'src/app/theme/shared/components/pagination/pagination.component';
+import { ListToolbarComponent } from 'src/app/theme/shared/components/list-toolbar/list-toolbar.component';
+import { SortableHeaderComponent } from 'src/app/theme/shared/components/sortable-header/sortable-header.component';
+import { TableIconActionComponent } from 'src/app/theme/shared/components/table-icon-action/table-icon-action.component';
+import { DEFAULT_PAGE_LIMIT } from 'src/app/theme/shared/constants/pagination.constants';
+import { SortOrder } from 'src/app/theme/shared/models/sort-order.enum';
+import { createDebouncedSearch } from 'src/app/theme/shared/utils/debounced-search.util';
+import { nextTableSort } from 'src/app/theme/shared/utils/table-sort.util';
 import { BatchLookup } from '../../inventory/models/inventory.model';
+import { BatchType } from '../../inventory/models/batch-type.enum';
 import { Inventory } from '../../inventory/models/inventory.model';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import {
@@ -29,21 +40,35 @@ import {
   TransactionUser,
 } from '../models/transaction.model';
 import { TransactionService } from '../services/transaction.service';
+import { TransactionDetailModalComponent } from '../transaction-detail-modal/transaction-detail-modal.component';
 
 type SaleMethod = 'batch' | 'scan';
 
 @Component({
   selector: 'app-transaction-page',
-  imports: [ReactiveFormsModule, DatePipe, TitleCasePipe],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    TitleCasePipe,
+    PaginationComponent,
+    TransactionDetailModalComponent,
+    SortableHeaderComponent,
+    ListToolbarComponent,
+    TableIconActionComponent,
+  ],
   templateUrl: './transaction-page.component.html',
   styleUrl: './transaction-page.component.scss',
 })
-export class TransactionPageComponent {
+export class TransactionPageComponent implements OnInit {
   private fb = inject(FormBuilder);
   private transactionService = inject(TransactionService);
   private inventoryService = inject(InventoryService);
   private productService = inject(ProductService);
   private toastr = inject(ToastrService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
+  readonly debouncedSearch = createDebouncedSearch();
 
   activeTab: 'list' | 'sale' = 'list';
   saleMethod: SaleMethod = 'batch';
@@ -53,26 +78,36 @@ export class TransactionPageComponent {
   errorMessage = '';
   batchLookup: BatchLookup | null = null;
   batchLookupError = '';
+  transactionPage = signal(1);
+  transactionLimit = signal(DEFAULT_PAGE_LIMIT);
+  transactionSortBy = signal<string | undefined>(undefined);
+  transactionSortOrder = signal<SortOrder | undefined>(undefined);
+  viewingTransactionId = signal<string | null>(null);
 
-  pageDataResource = resource({
+  saleDataResource = resource({
     loader: async () => {
-      const [transactionResponse, inventoryResponse, productResponse] =
-        await Promise.all([
-          firstValueFrom(this.transactionService.get()),
-          firstValueFrom(this.inventoryService.get()),
-          firstValueFrom(this.productService.get()),
-        ]);
-
-      const products = new Map(
-        productResponse.data.map((product) => [product._id, product]),
-      );
+      const [batches, products] = await Promise.all([
+        this.inventoryService.getAllItems(),
+        this.productService.getAllItems(),
+      ]);
 
       return {
-        transactions: transactionResponse.data,
-        batches: inventoryResponse.data,
-        products,
+        batches,
+        products: new Map(products.map((product) => [product._id, product])),
       };
     },
+  });
+
+  transactionListResource = rxResource({
+    params: () => ({
+      page: this.transactionPage(),
+      limit: this.transactionLimit(),
+      search: this.debouncedSearch.debouncedSearch(),
+      sortBy: this.transactionSortBy(),
+      sortOrder: this.transactionSortOrder(),
+    }),
+    stream: ({ params }) =>
+      this.transactionService.get(params).pipe(map((response) => response.data)),
   });
 
   saleForm = this.fb.nonNullable.group({
@@ -86,21 +121,40 @@ export class TransactionPageComponent {
     return this.saleForm.controls;
   }
 
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const viewId = params.get('view');
+
+      if (viewId) {
+        this.activeTab = 'list';
+        this.viewingTransactionId.set(viewId);
+      }
+    });
+  }
+
   get transactions(): Transaction[] {
-    return this.pageDataResource.value()?.transactions ?? [];
+    return this.transactionListResource.value()?.items ?? [];
   }
 
   get products(): Map<string, Product> {
-    return this.pageDataResource.value()?.products ?? new Map();
+    return this.saleDataResource.value()?.products ?? new Map();
   }
 
   get availableBatches(): Inventory[] {
-    return (this.pageDataResource.value()?.batches ?? []).filter((batch) => {
+    return (this.saleDataResource.value()?.batches ?? []).filter((batch) => {
       if (batch.remainingQuantity <= 0) {
         return false;
       }
 
-      return new Date(batch.expiryDate).getTime() >= Date.now();
+      if (batch.batchType !== BatchType.FINISHED) {
+        return false;
+      }
+
+      if (batch.expiryDate && new Date(batch.expiryDate).getTime() < Date.now()) {
+        return false;
+      }
+
+      return true;
     });
   }
 
@@ -177,6 +231,46 @@ export class TransactionPageComponent {
     this.activeTab = tab;
   }
 
+  onTransactionPageChange(page: number): void {
+    this.transactionPage.set(page);
+  }
+
+  onSearchChange(value: string): void {
+    this.debouncedSearch.searchInput.set(value);
+    this.transactionPage.set(1);
+  }
+
+  onLimitChange(value: number): void {
+    this.transactionLimit.set(value);
+    this.transactionPage.set(1);
+  }
+
+  onTransactionSort(column: string): void {
+    const next = nextTableSort(
+      {
+        sortBy: this.transactionSortBy(),
+        sortOrder: this.transactionSortOrder(),
+      },
+      column,
+    );
+    this.transactionSortBy.set(next.sortBy);
+    this.transactionSortOrder.set(next.sortOrder);
+    this.transactionPage.set(1);
+  }
+
+  viewTransaction(id: string): void {
+    this.viewingTransactionId.set(id);
+  }
+
+  closeTransactionDetail(): void {
+    this.viewingTransactionId.set(null);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   setSaleMethod(method: SaleMethod): void {
     this.saleMethod = method;
     this.saleForm.patchValue({ batch: '', batchNumber: '' });
@@ -251,16 +345,32 @@ export class TransactionPageComponent {
     return formatDisplayQuantity(transaction.quantity, product.unit);
   }
 
+  getProducedFromLabel(transaction: Transaction): string {
+    const producedFrom = this.getTransactionBatch(transaction)?.producedFrom;
+
+    if (!producedFrom?.length) {
+      return '—';
+    }
+
+    return producedFrom
+      .flatMap((consumption) =>
+        consumption.batches.map(
+          (batch) => `${batch.batchNumber} (${consumption.productName})`,
+        ),
+      )
+      .join(', ');
+  }
+
   getTypeBadgeClass(type: TransactionType): string {
     switch (type) {
       case TransactionType.SALE:
         return 'text-bg-danger';
       case TransactionType.IN:
         return 'text-bg-success';
-      case TransactionType.CONVERT:
-        return 'text-bg-warning';
-      case TransactionType.PRODUCE:
+      case TransactionType.PRODUCED:
         return 'text-bg-primary';
+      default:
+        return 'text-bg-secondary';
     }
   }
 
@@ -327,7 +437,8 @@ export class TransactionPageComponent {
         this.saleForm.reset({ batch: '', batchNumber: '', quantity: null, remarks: '' });
         this.batchLookup = null;
         this.submitted = false;
-        this.pageDataResource.reload();
+        this.transactionListResource.reload();
+        this.saleDataResource.reload();
         this.activeTab = 'list';
       },
       error: (error) => {

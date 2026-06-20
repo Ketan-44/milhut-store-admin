@@ -1,6 +1,5 @@
 export enum TransactionType {
   IN = 'IN',
-  CONVERT = 'CONVERT',
-  PRODUCE = 'PRODUCE',
+  PRODUCED = 'PRODUCED',
   SALE = 'SALE',
 }

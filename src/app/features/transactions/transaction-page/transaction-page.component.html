@@ -26,23 +26,57 @@
     </li>
   </ul>
 
-  @if (pageDataResource.isLoading()) {
+  @if (activeTab === 'list' && transactionListResource.isLoading()) {
     <div class="text-muted">Loading transactions...</div>
-  } @else if (pageDataResource.error()) {
+  } @else if (activeTab === 'list' && transactionListResource.error()) {
     <div class="text-danger">Failed to load transactions.</div>
-  } @else if (pageDataResource.hasValue() && activeTab === 'list') {
+  } @else if (activeTab === 'list' && transactionListResource.hasValue()) {
     <div class="card tbl-card">
+      <app-list-toolbar
+        [search]="debouncedSearch.searchInput()"
+        [limit]="transactionLimit()"
+        searchPlaceholder="Search by product, batch, or remarks"
+        (searchChange)="onSearchChange($event)"
+        (limitChange)="onLimitChange($event)"
+      />
+
       <div class="table-responsive transaction-table-wrapper">
         <table class="table table-hover mb-0 transaction-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Type</th>
+              <th>
+                <app-sortable-header
+                  label="Date"
+                  column="createdAt"
+                  [sortBy]="transactionSortBy()"
+                  [sortOrder]="transactionSortOrder()"
+                  (sortClick)="onTransactionSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Type"
+                  column="type"
+                  [sortBy]="transactionSortBy()"
+                  [sortOrder]="transactionSortOrder()"
+                  (sortClick)="onTransactionSort($event)"
+                />
+              </th>
               <th>Product</th>
               <th>Batch</th>
-              <th>Quantity</th>
+              <th>Produced From</th>
+              <th>
+                <app-sortable-header
+                  label="Quantity"
+                  column="quantity"
+                  [sortBy]="transactionSortBy()"
+                  [sortOrder]="transactionSortOrder()"
+                  (sortClick)="onTransactionSort($event)"
+                />
+              </th>
               <th>Performed By</th>
               <th>Remarks</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -58,20 +92,45 @@
                 </td>
                 <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
                 <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
+                <td>{{ getProducedFromLabel(transaction) }}</td>
                 <td>{{ getTransactionQuantity(transaction) }}</td>
                 <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
                 <td>{{ transaction.remarks ?? '—' }}</td>
+                <td class="text-end">
+                  <app-table-icon-action
+                    icon="eye"
+                    title="View transaction"
+                    variant="primary"
+                    (actionClick)="viewTransaction(transaction._id)"
+                  />
+                </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="text-center text-muted py-4">No transactions found.</td>
+                <td colspan="9" class="text-center text-muted py-4">
+                  @if (debouncedSearch.searchInput()) {
+                    No transactions match your search.
+                  } @else {
+                    No transactions found.
+                  }
+                </td>
               </tr>
             }
           </tbody>
         </table>
+
+        @if (transactionListResource.value()?.meta; as meta) {
+          <div class="px-3 pb-3">
+            <app-pagination [meta]="meta" (pageChange)="onTransactionPageChange($event)" />
+          </div>
+        }
       </div>
     </div>
-  } @else if (pageDataResource.hasValue()) {
+  } @else if (activeTab === 'sale' && saleDataResource.isLoading()) {
+    <div class="text-muted">Loading sale form...</div>
+  } @else if (activeTab === 'sale' && saleDataResource.error()) {
+    <div class="text-danger">Failed to load sale form data.</div>
+  } @else if (activeTab === 'sale' && saleDataResource.hasValue()) {
     <div class="card">
       <div class="card-body">
         <ul class="nav nav-pills mb-3">
@@ -241,3 +300,10 @@
     </div>
   }
 </div>
+
+@if (viewingTransactionId(); as transactionId) {
+  <app-transaction-detail-modal
+    [transactionId]="transactionId"
+    (closed)="closeTransactionDetail()"
+  />
+}

@@ -8,16 +8,19 @@ import { SharedModule } from '../../shared/shared.module';
 import { NavBarComponent } from './nav-bar/nav-bar.component';
 import { NavigationComponent } from './navigation/navigation.component';
 import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb.component';
+import { UserProfileModalComponent } from '../../shared/components/user-profile-modal/user-profile-modal.component';
 import { LayoutStateService } from '../../shared/services/layout-state.service';
+import { UserProfileModalService } from '../../shared/services/user-profile-modal.service';
 
 @Component({
   selector: 'app-admin',
-  imports: [CommonModule, SharedModule, NavigationComponent, NavBarComponent, RouterModule, BreadcrumbComponent],
+  imports: [CommonModule, SharedModule, NavigationComponent, NavBarComponent, RouterModule, BreadcrumbComponent, UserProfileModalComponent],
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.scss']
 })
 export class AdminLayout {
   private layoutState = inject(LayoutStateService);
+  profileModalService = inject(UserProfileModalService);
 
   // public props
   navCollapsed: boolean;

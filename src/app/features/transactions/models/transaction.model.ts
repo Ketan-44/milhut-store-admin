@@ -9,11 +9,27 @@ export interface TransactionProduct {
   unit: ProductUnit;
 }
 
+export interface ProducedFromBatch {
+  batchId: string;
+  batchNumber: string;
+  quantity: number;
+}
+
+export interface ProducedFromConsumption {
+  productId: string;
+  productName: string;
+  batches: ProducedFromBatch[];
+}
+
 export interface TransactionBatch {
   _id: string;
   batchNumber: string;
   batchType: string;
   remainingQuantity: number;
+  quantity?: number;
+  expiryDate?: string;
+  recipeId?: string | null;
+  producedFrom?: ProducedFromConsumption[];
 }
 
 export interface TransactionUser {

@@ -48,7 +48,7 @@ export class AuthLoginComponent {
       next: (response) => {
         this.loggingIn = false;
         this.authService.storeToken(response.data);
-        this.router.navigate(['/users']);
+        this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         this.loggingIn = false;

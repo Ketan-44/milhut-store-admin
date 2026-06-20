@@ -17,3 +17,9 @@ export interface CreateRecipe {
   finishedProductId: string;
   ingredients?: RecipeIngredient[];
 }
+
+export interface UpdateRecipe {
+  name?: string;
+  finishedProductId?: string;
+  ingredients?: RecipeIngredient[];
+}

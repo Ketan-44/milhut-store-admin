@@ -48,12 +48,5 @@
 }
 
 .inventory-actions {
-  display: inline-flex;
   flex-wrap: nowrap;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.inventory-actions .btn {
-  white-space: nowrap;
 }

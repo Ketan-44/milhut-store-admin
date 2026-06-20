@@ -24,6 +24,14 @@
 
   // card
   --pc-card-box-shadow: none;
+
+  // z-index layers
+  --z-sidebar: 1026;
+  --z-header: 1025;
+  --z-breadcrumb: 1023;
+  --z-dropdown: 1099;
+  --z-modal-backdrop: 1100;
+  --z-modal: 1101;
 }
 
 $header-height: 60px;

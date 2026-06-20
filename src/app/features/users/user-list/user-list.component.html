@@ -1,6 +1,14 @@
 <div class="col-md-12">
     <h5 class="mb-3">Users</h5>
     <div class="card tbl-card">
+      <app-list-toolbar
+        [search]="debouncedSearch.searchInput()"
+        [limit]="limit()"
+        searchPlaceholder="Search by name, email, or phone"
+        (searchChange)="onSearchChange($event)"
+        (limitChange)="onLimitChange($event)"
+      />
+
       <div class="table-responsive">
         @if (userResource.isLoading()) {
         <div class="p-4 text-muted">Loading users...</div>
@@ -10,17 +18,47 @@
           <table class="table table-hover mb-0">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
+                <th>
+                  <app-sortable-header
+                    label="Name"
+                    column="name"
+                    [sortBy]="sortBy()"
+                    [sortOrder]="sortOrder()"
+                    (sortClick)="onSort($event)"
+                  />
+                </th>
+                <th>
+                  <app-sortable-header
+                    label="Email"
+                    column="email"
+                    [sortBy]="sortBy()"
+                    [sortOrder]="sortOrder()"
+                    (sortClick)="onSort($event)"
+                  />
+                </th>
                 <th>Phone</th>
-                <th>Role</th>
-                <th>Status</th>
-                <!-- <th class="text-end">TOTAL ORDER</th> -->
-                <!-- <th class="text-end">TOTAL AMOUNT</th> -->
+                <th>
+                  <app-sortable-header
+                    label="Role"
+                    column="role"
+                    [sortBy]="sortBy()"
+                    [sortOrder]="sortOrder()"
+                    (sortClick)="onSort($event)"
+                  />
+                </th>
+                <th>
+                  <app-sortable-header
+                    label="Status"
+                    column="isActive"
+                    [sortBy]="sortBy()"
+                    [sortOrder]="sortOrder()"
+                    (sortClick)="onSort($event)"
+                  />
+                </th>
               </tr>
             </thead>
             <tbody>
-              @for (user of userResource.value() ?? []; track user._id) {
+              @for (user of userResource.value()?.items ?? []; track user._id) {
                 <tr>
                   <td>{{ user.name }}</td>
                   <td>{{ user.email }}</td>
@@ -28,9 +66,25 @@
                   <td>{{ getRole(user.role) | titlecase }}</td>
                   <td><span class="badge" [ngClass]="{'text-bg-success': user.isActive, 'text-bg-danger': !user.isActive}">{{user.isActive ? 'Active': 'In-Active'}}</span></td>
                 </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    @if (debouncedSearch.searchInput()) {
+                      No users match your search.
+                    } @else {
+                      No users found.
+                    }
+                  </td>
+                </tr>
               }
             </tbody>
           </table>
+
+          @if (userResource.value()?.meta; as meta) {
+            <div class="px-3 pb-3">
+              <app-pagination [meta]="meta" (pageChange)="onPageChange($event)" />
+            </div>
+          }
         }
       </div>
     </div>

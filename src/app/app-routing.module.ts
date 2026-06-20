@@ -15,12 +15,12 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: '/dashboard/default',
+        redirectTo: '/dashboard',
         pathMatch: 'full'
       },
       {
-        path: 'dashboard/default',
-        loadComponent: () => import('./features/dashboard/default/default.component').then((c) => c.DefaultComponent),
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard.component').then((c) => c.DashboardComponent),
         canActivate: [authGuard]
       },
       {
@@ -39,6 +39,11 @@ const routes: Routes = [
         canActivate: [authGuard]
       },
       {
+        path: 'products/:id/edit',
+        loadComponent: () => import('./features/products/product-form/product-form.component').then((c) => c.ProductFormComponent),
+        canActivate: [authGuard]
+      },
+      {
         path: 'inventory',
         loadComponent: () => import('./features/inventory/inventory-list/inventory-list.component').then((c) => c.InventoryListComponent),
         canActivate: [authGuard]
@@ -49,12 +54,22 @@ const routes: Routes = [
         canActivate: [authGuard]
       },
       {
+        path: 'inventory/:id/edit',
+        loadComponent: () => import('./features/inventory/inventory-edit/inventory-edit.component').then((c) => c.InventoryEditComponent),
+        canActivate: [authGuard]
+      },
+      {
         path: 'production',
         loadComponent: () => import('./features/production/production-page/production-page.component').then((c) => c.ProductionPageComponent),
         canActivate: [authGuard]
       },
       {
         path: 'production/recipes/create',
+        loadComponent: () => import('./features/production/recipe-form/recipe-form.component').then((c) => c.RecipeFormComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'production/recipes/:id/edit',
         loadComponent: () => import('./features/production/recipe-form/recipe-form.component').then((c) => c.RecipeFormComponent),
         canActivate: [authGuard]
       },

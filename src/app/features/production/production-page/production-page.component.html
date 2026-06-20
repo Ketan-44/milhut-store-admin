@@ -37,8 +37,24 @@
         <table class="table table-hover mb-0 production-table">
           <thead>
             <tr>
-              <th>Recipe</th>
-              <th>Finished Product</th>
+              <th>
+                <app-sortable-header
+                  label="Recipe"
+                  column="name"
+                  [sortBy]="recipeSortBy()"
+                  [sortOrder]="recipeSortOrder()"
+                  (sortClick)="onRecipeSort($event)"
+                />
+              </th>
+              <th>
+                <app-sortable-header
+                  label="Finished Product"
+                  column="finishedProductId"
+                  [sortBy]="recipeSortBy()"
+                  [sortOrder]="recipeSortOrder()"
+                  (sortClick)="onRecipeSort($event)"
+                />
+              </th>
               <th>Ingredients</th>
               <th class="text-end">Actions</th>
             </tr>
@@ -50,13 +66,27 @@
                 <td>{{ getProductName(recipe.finishedProductId) | titlecase }}</td>
                 <td>{{ getIngredientDisplay(recipe) }}</td>
                 <td class="text-end">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary btn-sm"
-                    (click)="runProductionForRecipe(recipe._id)"
-                  >
-                    Run Production
-                  </button>
+                  <div class="table-action-group">
+                    <app-table-icon-action
+                      icon="play-circle"
+                      title="Run production"
+                      variant="primary"
+                      (actionClick)="runProductionForRecipe(recipe._id)"
+                    />
+                    <app-table-icon-action
+                      icon="edit"
+                      title="Edit recipe"
+                      variant="secondary"
+                      [routerLink]="['/production/recipes', recipe._id, 'edit']"
+                    />
+                    <app-table-icon-action
+                      icon="delete"
+                      title="Delete recipe"
+                      variant="danger"
+                      [disabled]="deletingRecipeId() === recipe._id"
+                      (actionClick)="deleteRecipe(recipe._id, recipe.name)"
+                    />
+                  </div>
                 </td>
               </tr>
             } @empty {
@@ -66,6 +96,12 @@
             }
           </tbody>
         </table>
+
+        @if (pageDataResource.value()?.recipeMeta; as meta) {
+          <div class="px-3 pb-3">
+            <app-pagination [meta]="meta" (pageChange)="onRecipePageChange($event)" />
+          </div>
+        }
       </div>
     </div>
   } @else if (pageDataResource.hasValue()) {
@@ -81,7 +117,7 @@
               [class.is-invalid]="f.recipeId.invalid && (f.recipeId.touched || submitted)"
             >
               <option value="" disabled>Select recipe</option>
-              @for (recipe of recipes; track recipe._id) {
+              @for (recipe of allRecipes; track recipe._id) {
                 <option [value]="recipe._id">
                   {{ recipe.name }} — {{ getProductName(recipe.finishedProductId) | titlecase }}
                 </option>
@@ -141,11 +177,19 @@
               id="expiryDate"
               class="form-control"
               formControlName="expiryDate"
+              [min]="minExpiryDate"
               [class.is-invalid]="f.expiryDate.invalid && (f.expiryDate.touched || submitted)"
             />
 
             @if (f.expiryDate.invalid && (f.expiryDate.touched || submitted)) {
-              <div class="invalid-feedback">Expiry date is required.</div>
+              <div class="invalid-feedback">
+                @if (f.expiryDate.errors?.['required']) {
+                  <div>Expiry date is required.</div>
+                }
+                @if (f.expiryDate.errors?.['minDate']) {
+                  <div>Expiry date cannot be in the past.</div>
+                }
+              </div>
             }
           </div>
 
@@ -180,7 +224,7 @@
             </div>
           }
 
-          <button type="submit" class="btn btn-primary" [disabled]="saving || recipes.length === 0">
+          <button type="submit" class="btn btn-primary" [disabled]="saving || allRecipes.length === 0">
             {{ saving ? 'Running...' : 'Run Production' }}
           </button>
         </form>

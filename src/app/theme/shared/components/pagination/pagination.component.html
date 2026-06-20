@@ -1,0 +1,39 @@
+@if (meta().total > 0) {
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+    <small class="text-muted mb-0">
+      Showing {{ startItem() }}–{{ endItem() }} of {{ meta().total }}
+    </small>
+
+    @if (meta().totalPages > 1) {
+      <nav aria-label="Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="meta().page <= 1">
+            <button
+              type="button"
+              class="page-link"
+              [disabled]="meta().page <= 1"
+              (click)="changePage(meta().page - 1)"
+            >
+              Previous
+            </button>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link">
+              Page {{ meta().page }} of {{ meta().totalPages }}
+            </span>
+          </li>
+          <li class="page-item" [class.disabled]="meta().page >= meta().totalPages">
+            <button
+              type="button"
+              class="page-link"
+              [disabled]="meta().page >= meta().totalPages"
+              (click)="changePage(meta().page + 1)"
+            >
+              Next
+            </button>
+          </li>
+        </ul>
+      </nav>
+    }
+  </div>
+}

@@ -1,0 +1,21 @@
+@if (routerLink(); as link) {
+  <a
+    [routerLink]="link"
+    [class]="variantClass()"
+    [title]="title()"
+    [attr.aria-label]="title()"
+  >
+    <span antIcon [type]="icon()" theme="outline"></span>
+  </a>
+} @else {
+  <button
+    type="button"
+    [class]="variantClass()"
+    [title]="title()"
+    [attr.aria-label]="title()"
+    [disabled]="disabled()"
+    (click)="actionClick.emit($event)"
+  >
+    <span antIcon [type]="icon()" theme="outline"></span>
+  </button>
+}
