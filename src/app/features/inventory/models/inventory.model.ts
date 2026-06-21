@@ -24,8 +24,31 @@ export interface CreateInventory {
 }
 
 export interface UpdateInventory {
+  batchNumber?: string;
+  productId?: string;
+  quantity?: number;
   expiryDate?: string | null;
   sourceName?: string | null;
+}
+
+export interface CreateConversion {
+  sourceBatchId: string;
+  finishedProductId: string;
+  quantity: number;
+  expiryDate?: string;
+  remarks?: string;
+}
+
+export interface ConversionResult {
+  sourceBatch: {
+    id: string;
+    batchNumber: string;
+    remainingQuantity: number;
+  };
+  producedBatch: BatchLookup;
+  consumedQuantity: number;
+  outputQuantity: number;
+  transactionId: string;
 }
 
 export interface BatchLookup {

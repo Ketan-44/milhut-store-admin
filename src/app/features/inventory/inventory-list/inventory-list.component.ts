@@ -55,13 +55,24 @@ export class InventoryListComponent {
     params: () => ({
       page: this.page(),
       limit: this.limit(),
-      search: this.debouncedSearch.debouncedSearch(),
+      search: this.debouncedSearch.debouncedSearch().trim(),
       sortBy: this.sortBy(),
       sortOrder: this.sortOrder(),
     }),
     stream: ({ params }) =>
       this.inventoryService.get(params).pipe(
-        map((inventoryResponse) => inventoryResponse.data),
+        map((inventoryResponse) => {
+          const data = inventoryResponse.data;
+
+          if (params.search?.trim()) {
+            return data;
+          }
+
+          return {
+            ...data,
+            items: data.items.filter((item) => item.remainingQuantity > 0),
+          };
+        }),
       ),
   });
 
@@ -123,6 +134,10 @@ export class InventoryListComponent {
     }
 
     return new Date(expiryDate).getTime() < Date.now();
+  }
+
+  isDepleted(batch: Inventory): boolean {
+    return batch.remainingQuantity <= 0;
   }
 
   viewQr(batch: Inventory): void {

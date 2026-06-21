@@ -10,6 +10,8 @@ import { appendPaginationParams } from 'src/app/theme/shared/utils/pagination-pa
 import { environment } from 'src/environments/environment';
 import {
   BatchLookup,
+  ConversionResult,
+  CreateConversion,
   CreateInventory,
   Inventory,
   UpdateInventory,
@@ -42,6 +44,13 @@ export class InventoryService {
     return this.http.post<ApiResponse<Inventory>>(
       `${environment.apiUrl}/inventory`,
       inventory,
+    );
+  }
+
+  convert(conversion: CreateConversion) {
+    return this.http.post<ApiResponse<ConversionResult>>(
+      `${environment.apiUrl}/inventory/conversion`,
+      conversion,
     );
   }
 

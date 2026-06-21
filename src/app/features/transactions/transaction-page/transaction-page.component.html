@@ -64,7 +64,7 @@
               </th>
               <th>Product</th>
               <th>Batch</th>
-              <th>Produced From</th>
+              <!-- <th>Produced From</th> -->
               <th>
                 <app-sortable-header
                   label="Quantity"
@@ -92,7 +92,7 @@
                 </td>
                 <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
                 <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
-                <td>{{ getProducedFromLabel(transaction) }}</td>
+                <!-- <td>{{ getProducedFromLabel(transaction) }}</td> -->
                 <td>{{ getTransactionQuantity(transaction) }}</td>
                 <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>
                 <td>{{ transaction.remarks ?? '—' }}</td>
@@ -133,105 +133,34 @@
   } @else if (activeTab === 'sale' && saleDataResource.hasValue()) {
     <div class="card">
       <div class="card-body">
-        <ul class="nav nav-pills mb-3">
-          <li class="nav-item">
-            <button
-              type="button"
-              class="nav-link"
-              [class.active]="saleMethod === 'batch'"
-              (click)="setSaleMethod('batch')"
-            >
-              Select Batch
-            </button>
-          </li>
-          <li class="nav-item">
-            <button
-              type="button"
-              class="nav-link"
-              [class.active]="saleMethod === 'scan'"
-              (click)="setSaleMethod('scan')"
-            >
-              Scan QR
-            </button>
-          </li>
-        </ul>
-
         <form [formGroup]="saleForm" (ngSubmit)="onSubmitSale()">
-          @if (saleMethod === 'batch') {
-            <div class="form-group mb-3">
-              <label class="form-label" for="batch">Batch</label>
-              <select
-                id="batch"
-                class="form-select"
-                formControlName="batch"
-                (change)="onBatchChange()"
-                [class.is-invalid]="submitted && !f.batch.value"
-              >
-                <option value="" disabled>Select batch</option>
-                @for (batch of availableBatches; track batch._id) {
-                  <option [value]="batch._id">
-                    {{ batch.batchNumber }} — {{ products.get(batch.productId)?.name | titlecase }}
-                  </option>
-                }
-              </select>
-
-              @if (submitted && !f.batch.value) {
-                <div class="invalid-feedback d-block">Batch is required.</div>
+          <div class="form-group mb-3">
+            <label class="form-label" for="batch">Batch</label>
+            <select
+              id="batch"
+              class="form-select"
+              formControlName="batch"
+              (change)="onBatchChange()"
+              [class.is-invalid]="submitted && !f.batch.value"
+            >
+              <option value="" disabled>Select batch</option>
+              @for (batch of availableBatches; track batch._id) {
+                <option [value]="batch._id">
+                  {{ batch.batchNumber }} — {{ products.get(batch.productId)?.name | titlecase }}
+                </option>
               }
+            </select>
 
-              @if (availableBatches.length === 0) {
-                <small class="text-warning d-block mt-1">
-                  No available batches with remaining quantity.
-                </small>
-              }
-            </div>
-          } @else {
-            <div class="form-group mb-3">
-              <label class="form-label" for="batchNumber">Batch Number</label>
-              <div class="input-group">
-                <input
-                  type="text"
-                  id="batchNumber"
-                  class="form-control"
-                  placeholder="Scan QR or enter batch number"
-                  formControlName="batchNumber"
-                  [class.is-invalid]="submitted && !f.batchNumber.value.trim()"
-                />
-                <button
-                  type="button"
-                  class="btn btn-outline-primary"
-                  [disabled]="lookingUpBatch"
-                  (click)="lookupBatchNumber()"
-                >
-                  {{ lookingUpBatch ? 'Looking up...' : 'Lookup' }}
-                </button>
-              </div>
+            @if (submitted && !f.batch.value) {
+              <div class="invalid-feedback d-block">Batch is required.</div>
+            }
 
-              @if (submitted && !f.batchNumber.value.trim()) {
-                <div class="invalid-feedback d-block">Batch number is required.</div>
-              }
-
-              @if (batchLookupError) {
-                <small class="text-danger d-block mt-1">{{ batchLookupError }}</small>
-              }
-
-              @if (batchLookup) {
-                <div class="alert alert-light border mt-2 mb-0">
-                  <div><strong>Product:</strong> {{ batchLookup.product.name | titlecase }}</div>
-                  <div><strong>Batch:</strong> {{ batchLookup.batch.batchNumber }}</div>
-                  <div>
-                    <strong>Available:</strong>
-                    {{ batchLookup.batch.displayRemainingQuantity }}
-                    {{
-                      batchLookup.product.unit === 'WEIGHT'
-                        ? 'kg'
-                        : (batchLookup.product.unit | titlecase)
-                    }}
-                  </div>
-                </div>
-              }
-            </div>
-          }
+            @if (availableBatches.length === 0) {
+              <small class="text-warning d-block mt-1">
+                No available batches with remaining quantity.
+              </small>
+            }
+          </div>
 
           <div class="form-group mb-3">
             <label class="form-label" for="quantity">{{ quantityLabel }}</label>

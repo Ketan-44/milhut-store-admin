@@ -80,6 +80,12 @@
                       [routerLink]="['/production/recipes', recipe._id, 'edit']"
                     />
                     <app-table-icon-action
+                      icon="copy"
+                      title="Copy recipe"
+                      variant="secondary"
+                      (actionClick)="copyRecipe(recipe._id)"
+                    />
+                    <app-table-icon-action
                       icon="delete"
                       title="Delete recipe"
                       variant="danger"

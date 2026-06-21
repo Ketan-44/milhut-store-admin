@@ -1,7 +1,10 @@
 <div class="col-md-12">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0">Inventory</h5>
-    <a routerLink="/inventory/create" class="btn btn-primary btn-sm">Add Batch</a>
+    <div class="d-flex gap-2">
+      <a routerLink="/inventory/conversion" class="btn btn-outline-primary btn-sm">Conversion</a>
+      <a routerLink="/inventory/create" class="btn btn-primary btn-sm">Add Batch</a>
+    </div>
   </div>
 
   <div class="card tbl-card">
@@ -118,6 +121,8 @@
                 <td>
                   @if (batch.expiryDate && isExpired(batch.expiryDate)) {
                     <span class="badge text-bg-danger">Expired</span>
+                  } @else if (isDepleted(batch)) {
+                    <span class="badge text-bg-secondary">Depleted</span>
                   } @else {
                     <span class="badge text-bg-success">Available</span>
                   }

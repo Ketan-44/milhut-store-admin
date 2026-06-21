@@ -10,15 +10,77 @@
         <div class="text-muted">Loading batch...</div>
       } @else if (batchResource.error()) {
         <div class="text-danger">{{ loadErrorMessage }}</div>
-      } @else if (batchResource.hasValue()) {
-        <div class="mb-3">
-          <div><strong>Batch:</strong> {{ batchResource.value()!.batch.batchNumber }}</div>
-          <div>
-            <strong>Product:</strong> {{ batchResource.value()!.product.name | titlecase }}
-          </div>
-        </div>
-
+      } @else if (batchResource.hasValue() && formReady()) {
         <form [formGroup]="inventoryForm" (ngSubmit)="onSubmit()">
+          <div class="form-group mb-3">
+            <label class="form-label" for="batchNumber">Batch Number</label>
+            <input
+              type="text"
+              id="batchNumber"
+              class="form-control"
+              formControlName="batchNumber"
+            />
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="productId">Product</label>
+            <select
+              id="productId"
+              class="form-select"
+              formControlName="productId"
+              [class.is-invalid]="f.productId.invalid && (f.productId.touched || submitted)"
+            >
+              <option value="" disabled>Select product</option>
+              @for (product of products; track product._id) {
+                <option [value]="product._id">
+                  {{ product.name | titlecase }} ({{ product.type | titlecase }} / {{ product.unit | titlecase }})
+                </option>
+              }
+            </select>
+
+            @if (f.productId.invalid && (f.productId.touched || submitted)) {
+              <div class="invalid-feedback">Product is required.</div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="quantity">{{ quantityLabel }}</label>
+            <input
+              type="number"
+              id="quantity"
+              class="form-control"
+              [placeholder]="quantityPlaceholder"
+              [step]="quantityStep"
+              [min]="quantityMin"
+              formControlName="quantity"
+              [class.is-invalid]="f.quantity.invalid && (f.quantity.touched || submitted)"
+            />
+
+            @if (quantityHint) {
+              <small class="text-muted d-block mt-1">{{ quantityHint }}</small>
+            }
+
+            @if (remainingQuantityLabel) {
+              <small class="text-muted d-block mt-1">
+                Current remaining: {{ remainingQuantityLabel }}
+              </small>
+            }
+
+            @if (f.quantity.invalid && (f.quantity.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.quantity.errors?.['required']) {
+                  <div>Quantity is required.</div>
+                }
+                @if (f.quantity.errors?.['min']) {
+                  <div>Quantity must be greater than zero.</div>
+                }
+                @if (f.quantity.errors?.['integer']) {
+                  <div>Quantity must be a whole number for piece products.</div>
+                }
+              </div>
+            }
+          </div>
+
           <div class="form-group mb-3">
             <label class="form-label" for="sourceName">Source Name</label>
             <input

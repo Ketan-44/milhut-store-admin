@@ -160,9 +160,18 @@ export class ProductionPageComponent {
 
   runProductionForRecipe(recipeId: string): void {
     this.activeTab = 'run';
-    this.productionForm.patchValue({ recipeId });
     this.lastResult = null;
     this.errorMessage = '';
+
+    queueMicrotask(() => {
+      this.productionForm.patchValue({ recipeId }, { emitEvent: false });
+    });
+  }
+
+  copyRecipe(recipeId: string): void {
+    this.router.navigate(['/production/recipes/create'], {
+      queryParams: { copyFrom: recipeId },
+    });
   }
 
   deleteRecipe(id: string, name: string): void {
@@ -256,9 +265,11 @@ export class ProductionPageComponent {
         });
       },
       error: (error) => {
-        this.saving = false;
-        this.errorMessage = error.message ?? 'Failed to run production.';
-        this.toastr.error(this.errorMessage, 'Error');
+        queueMicrotask(() => {
+          this.saving = false;
+          this.errorMessage = error.message ?? 'Failed to run production.';
+          this.toastr.error(this.errorMessage, 'Error');
+        });
       },
     });
   }

@@ -5,7 +5,7 @@
     [title]="title()"
     [attr.aria-label]="title()"
   >
-    <span antIcon [type]="icon()" theme="outline"></span>
+    <span antIcon [type]="iconType()" theme="outline"></span>
   </a>
 } @else {
   <button
@@ -16,6 +16,6 @@
     [disabled]="disabled()"
     (click)="actionClick.emit($event)"
   >
-    <span antIcon [type]="icon()" theme="outline"></span>
+    <span antIcon [type]="iconType()" theme="outline"></span>
   </button>
 }

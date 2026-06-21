@@ -1,0 +1,186 @@
+<div class="col-md-12">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Batch Conversion</h5>
+    <a routerLink="/inventory" class="btn btn-outline-secondary btn-sm">Back to List</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      @if (isFormLoading()) {
+        <div class="text-muted">Loading conversion form...</div>
+      } @else if (formDataResource.error()) {
+        <div class="text-danger">Failed to load conversion form data.</div>
+      } @else if (formDataResource.hasValue()) {
+        <p class="text-muted">
+          Convert quantity from a RAW batch into a FINISHED product batch. The entered
+          quantity will be deducted from the selected RAW batch.
+        </p>
+
+        <form [formGroup]="conversionForm" (ngSubmit)="onSubmit()">
+          <div class="form-group mb-3">
+            <label class="form-label" for="sourceBatchId">RAW Batch</label>
+            <select
+              id="sourceBatchId"
+              class="form-select"
+              formControlName="sourceBatchId"
+              [class.is-invalid]="f.sourceBatchId.invalid && (f.sourceBatchId.touched || submitted)"
+            >
+              <option value="" disabled>Select RAW batch</option>
+              @for (batch of rawBatches; track batch._id) {
+                <option [value]="batch._id">
+                  {{ getRawBatchLabel(batch) }}
+                </option>
+              }
+            </select>
+
+            @if (f.sourceBatchId.invalid && (f.sourceBatchId.touched || submitted)) {
+              <div class="invalid-feedback">RAW batch is required.</div>
+            }
+
+            @if (rawBatches.length === 0) {
+              <small class="text-warning d-block mt-1">
+                No available RAW batches with remaining quantity.
+              </small>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="quantity">{{ conversionQuantityLabel }}</label>
+            <input
+              type="number"
+              id="quantity"
+              class="form-control"
+              formControlName="quantity"
+              [step]="conversionQuantityStep"
+              [placeholder]="conversionQuantityPlaceholder"
+              [min]="conversionQuantityMin"
+              [disabled]="!selectedRawBatch"
+              [class.is-invalid]="f.quantity.invalid && (f.quantity.touched || submitted)"
+            />
+
+            @if (conversionQuantityHint) {
+              <small class="text-muted d-block mt-1">{{ conversionQuantityHint }}</small>
+            }
+
+            @if (maxConversionQuantityHint) {
+              <small class="text-muted d-block mt-1">{{ maxConversionQuantityHint }}</small>
+            }
+
+            @if (f.quantity.invalid && (f.quantity.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.quantity.errors?.['required']) {
+                  <div>Quantity is required.</div>
+                }
+                @if (f.quantity.errors?.['min']) {
+                  <div>Quantity must be greater than zero.</div>
+                }
+                @if (f.quantity.errors?.['max']) {
+                  <div>Quantity exceeds available batch stock.</div>
+                }
+                @if (f.quantity.errors?.['integer']) {
+                  <div>Quantity must be a whole number for piece products.</div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="finishedProductId">Finished Product</label>
+            <select
+              id="finishedProductId"
+              class="form-select"
+              formControlName="finishedProductId"
+              [class.is-invalid]="
+                f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)
+              "
+            >
+              <option value="" disabled>Select finished product</option>
+              @for (product of finishedProducts; track product._id) {
+                <option [value]="product._id">
+                  {{ product.name | titlecase }} ({{ product.unit | titlecase }})
+                </option>
+              }
+            </select>
+
+            @if (f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)) {
+              <div class="invalid-feedback">Finished product is required.</div>
+            }
+
+            @if (finishedProducts.length === 0) {
+              <small class="text-warning d-block mt-1">
+                No active finished products found.
+              </small>
+            }
+          </div>
+
+          @if (selectedFinishedProduct && outputQuantityPreview) {
+            <div class="alert alert-light border mb-3">
+              <div class="fw-semibold mb-1">{{ outputQuantityLabel }}</div>
+              <div>{{ outputQuantityPreview }}</div>
+              @if (selectedFinishedProduct.unit === 'PIECE' && selectedRawProduct) {
+                <small class="text-muted d-block mt-1">
+                  Each conversion produces 1 finished piece using the entered raw quantity.
+                </small>
+              }
+            </div>
+          }
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="expiryDate">
+              Finished Batch Expiry <span class="text-muted">(optional)</span>
+            </label>
+            <input
+              type="date"
+              id="expiryDate"
+              class="form-control"
+              formControlName="expiryDate"
+              [min]="minExpiryDate"
+              [class.is-invalid]="f.expiryDate.invalid && (f.expiryDate.touched || submitted)"
+            />
+
+            @if (f.expiryDate.invalid && (f.expiryDate.touched || submitted)) {
+              <div class="invalid-feedback">
+                @if (f.expiryDate.errors?.['minDate']) {
+                  <div>Expiry date cannot be in the past.</div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label" for="remarks">Remarks (optional)</label>
+            <textarea
+              id="remarks"
+              class="form-control"
+              rows="2"
+              formControlName="remarks"
+              placeholder="Conversion remarks"
+              maxlength="500"
+            ></textarea>
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          }
+
+          <div class="d-flex gap-2">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="
+                saving ||
+                rawBatches.length === 0 ||
+                finishedProducts.length === 0 ||
+                !selectedRawBatch ||
+                !selectedFinishedProduct
+              "
+            >
+              {{ saving ? 'Converting...' : 'Convert Batch' }}
+            </button>
+            <a routerLink="/inventory" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+</div>

@@ -13,7 +13,6 @@ import { DEFAULT_PAGE_LIMIT } from 'src/app/theme/shared/constants/pagination.co
 import { SortOrder } from 'src/app/theme/shared/models/sort-order.enum';
 import { createDebouncedSearch } from 'src/app/theme/shared/utils/debounced-search.util';
 import { nextTableSort } from 'src/app/theme/shared/utils/table-sort.util';
-import { BatchLookup } from '../../inventory/models/inventory.model';
 import { BatchType } from '../../inventory/models/batch-type.enum';
 import { Inventory } from '../../inventory/models/inventory.model';
 import { InventoryService } from '../../inventory/services/inventory.service';
@@ -24,7 +23,6 @@ import {
   getQuantityMin,
   getQuantityPlaceholder,
   getQuantityStep,
-  getUnitDisplayLabel,
   isValidDisplayQuantity,
   pieceQuantityValidator,
   toDisplayQuantity,
@@ -41,8 +39,6 @@ import {
 } from '../models/transaction.model';
 import { TransactionService } from '../services/transaction.service';
 import { TransactionDetailModalComponent } from '../transaction-detail-modal/transaction-detail-modal.component';
-
-type SaleMethod = 'batch' | 'scan';
 
 @Component({
   selector: 'app-transaction-page',
@@ -71,13 +67,9 @@ export class TransactionPageComponent implements OnInit {
   readonly debouncedSearch = createDebouncedSearch();
 
   activeTab: 'list' | 'sale' = 'list';
-  saleMethod: SaleMethod = 'batch';
   submitted = false;
   saving = false;
-  lookingUpBatch = false;
   errorMessage = '';
-  batchLookup: BatchLookup | null = null;
-  batchLookupError = '';
   transactionPage = signal(1);
   transactionLimit = signal(DEFAULT_PAGE_LIMIT);
   transactionSortBy = signal<string | undefined>(undefined);
@@ -112,7 +104,6 @@ export class TransactionPageComponent implements OnInit {
 
   saleForm = this.fb.nonNullable.group({
     batch: [''],
-    batchNumber: [''],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     remarks: [''],
   });
@@ -164,19 +155,6 @@ export class TransactionPageComponent implements OnInit {
   }
 
   get selectedProduct(): Product | undefined {
-    if (this.saleMethod === 'scan' && this.batchLookup) {
-      const product = this.batchLookup.product;
-      return {
-        _id: product.id,
-        name: product.name,
-        type: product.type,
-        unit: product.unit,
-        lowStockAlert: 0,
-        createdBy: '',
-        isActive: product.isActive,
-      };
-    }
-
     const batch = this.selectedBatch;
 
     if (!batch) {
@@ -213,10 +191,6 @@ export class TransactionPageComponent implements OnInit {
   }
 
   get maxSaleQuantityHint(): string {
-    if (this.saleMethod === 'scan' && this.batchLookup) {
-      return `Available: ${this.batchLookup.batch.displayRemainingQuantity} ${getUnitDisplayLabel(this.batchLookup.product.unit)}`;
-    }
-
     const batch = this.selectedBatch;
     const product = this.selectedProduct;
 
@@ -271,49 +245,8 @@ export class TransactionPageComponent implements OnInit {
     });
   }
 
-  setSaleMethod(method: SaleMethod): void {
-    this.saleMethod = method;
-    this.saleForm.patchValue({ batch: '', batchNumber: '' });
-    this.batchLookup = null;
-    this.batchLookupError = '';
-    this.errorMessage = '';
-    this.updateQuantityValidators();
-  }
-
   onBatchChange(): void {
-    this.batchLookup = null;
-    this.batchLookupError = '';
     this.updateQuantityValidators();
-  }
-
-  lookupBatchNumber(): void {
-    const batchNumber = this.saleForm.controls.batchNumber.value.trim();
-
-    if (!batchNumber) {
-      this.batchLookupError = 'Enter a batch number to lookup.';
-      return;
-    }
-
-    this.lookingUpBatch = true;
-    this.batchLookupError = '';
-    this.batchLookup = null;
-
-    this.inventoryService.getByBatchNumber(batchNumber).subscribe({
-      next: (response) => {
-        this.lookingUpBatch = false;
-        this.batchLookup = response.data;
-
-        if (!response.data.batch.canSell) {
-          this.batchLookupError = 'This batch cannot be sold (expired or depleted).';
-        }
-
-        this.updateQuantityValidators();
-      },
-      error: (error) => {
-        this.lookingUpBatch = false;
-        this.batchLookupError = error.message ?? 'Batch not found.';
-      },
-    });
   }
 
   getTransactionProduct(transaction: Transaction): TransactionProduct | undefined {
@@ -378,28 +311,9 @@ export class TransactionPageComponent implements OnInit {
     this.submitted = true;
     this.errorMessage = '';
 
-    if (this.saleMethod === 'batch' && !this.saleForm.controls.batch.value) {
+    if (!this.saleForm.controls.batch.value) {
       this.errorMessage = 'Please select a batch.';
       return;
-    }
-
-    if (this.saleMethod === 'scan') {
-      const batchNumber = this.saleForm.controls.batchNumber.value.trim();
-
-      if (!batchNumber) {
-        this.errorMessage = 'Please enter a batch number.';
-        return;
-      }
-
-      if (!this.batchLookup) {
-        this.errorMessage = 'Please lookup the batch before recording the sale.';
-        return;
-      }
-
-      if (!this.batchLookup.batch.canSell) {
-        this.errorMessage = 'This batch cannot be sold.';
-        return;
-      }
     }
 
     this.updateQuantityValidators();
@@ -409,7 +323,7 @@ export class TransactionPageComponent implements OnInit {
       return;
     }
 
-    const { batch, batchNumber, quantity, remarks } = this.saleForm.getRawValue();
+    const { batch, quantity, remarks } = this.saleForm.getRawValue();
     const product = this.selectedProduct;
 
     if (!product || quantity == null || !isValidDisplayQuantity(quantity, product.unit)) {
@@ -421,11 +335,9 @@ export class TransactionPageComponent implements OnInit {
     }
 
     const payload = {
+      batch,
       quantity,
       ...(remarks ? { remarks } : {}),
-      ...(this.saleMethod === 'batch'
-        ? { batch }
-        : { batchNumber: batchNumber.trim() }),
     };
 
     this.saving = true;
@@ -434,8 +346,7 @@ export class TransactionPageComponent implements OnInit {
       next: () => {
         this.saving = false;
         this.toastr.success('Sale recorded successfully.', 'Success');
-        this.saleForm.reset({ batch: '', batchNumber: '', quantity: null, remarks: '' });
-        this.batchLookup = null;
+        this.saleForm.reset({ batch: '', quantity: null, remarks: '' });
         this.submitted = false;
         this.transactionListResource.reload();
         this.saleDataResource.reload();
@@ -460,21 +371,13 @@ export class TransactionPageComponent implements OnInit {
       validators.push(pieceQuantityValidator());
     }
 
-    if (product) {
-      let maxQuantity: number | undefined;
+    if (product && this.selectedBatch) {
+      const maxQuantity = toDisplayQuantity(
+        this.selectedBatch.remainingQuantity,
+        product.unit,
+      );
 
-      if (this.saleMethod === 'scan' && this.batchLookup) {
-        maxQuantity = this.batchLookup.batch.displayRemainingQuantity;
-      } else if (this.selectedBatch) {
-        maxQuantity = toDisplayQuantity(
-          this.selectedBatch.remainingQuantity,
-          product.unit,
-        );
-      }
-
-      if (maxQuantity !== undefined) {
-        validators.push(Validators.max(maxQuantity));
-      }
+      validators.push(Validators.max(maxQuantity));
     }
 
     quantityControl.setValidators(validators);

@@ -8,6 +8,7 @@ import {
   NodeIndexOutline,
   PlayCircleOutline,
   QrcodeOutline,
+  SnippetsOutline,
 } from '@ant-design/icons-angular/icons';
 
 export type TableActionVariant = 'primary' | 'secondary' | 'danger';
@@ -18,7 +19,8 @@ export type TableActionIcon =
   | 'eye'
   | 'qrcode'
   | 'play-circle'
-  | 'node-index';
+  | 'node-index'
+  | 'copy';
 
 @Component({
   selector: 'app-table-icon-action',
@@ -44,6 +46,7 @@ export class TableIconActionComponent {
         QrcodeOutline,
         PlayCircleOutline,
         NodeIndexOutline,
+        SnippetsOutline,
       );
       TableIconActionComponent.iconsReady = true;
     }
@@ -51,5 +54,13 @@ export class TableIconActionComponent {
 
   variantClass(): string {
     return `table-action-btn table-action-btn--${this.variant()}`;
+  }
+
+  iconType(): string {
+    if (this.icon() === 'copy') {
+      return 'snippets';
+    }
+
+    return this.icon();
   }
 }

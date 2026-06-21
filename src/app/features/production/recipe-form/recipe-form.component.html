@@ -1,16 +1,23 @@
 <div class="col-md-12">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">{{ isEditMode ? 'Edit Recipe' : 'Add Recipe' }}</h5>
+    <div>
+      <h5 class="mb-0">{{ isEditMode ? 'Edit Recipe' : 'Add Recipe' }}</h5>
+      @if (isCopyMode && copiedFromName) {
+        <p class="text-muted mb-0 mt-1 small">Copied from {{ copiedFromName | titlecase }}</p>
+      }
+    </div>
     <a routerLink="/production" class="btn btn-outline-secondary btn-sm">Back</a>
   </div>
 
   <div class="card">
     <div class="card-body">
-      @if (formDataResource.isLoading() || loadingRecipe) {
+      @if (isFormLoading()) {
         <div class="text-muted">Loading form data...</div>
       } @else if (formDataResource.error()) {
         <div class="text-danger">Failed to load form data.</div>
-      } @else if (formDataResource.hasValue()) {
+      } @else if (errorMessage) {
+        <div class="text-danger">{{ errorMessage }}</div>
+      } @else if (canShowForm()) {
         <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
             <label class="form-label" for="name">Recipe Name</label>

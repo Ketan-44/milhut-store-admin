@@ -54,6 +54,11 @@ const routes: Routes = [
         canActivate: [authGuard]
       },
       {
+        path: 'inventory/conversion',
+        loadComponent: () => import('./features/inventory/inventory-conversion/inventory-conversion.component').then((c) => c.InventoryConversionComponent),
+        canActivate: [authGuard]
+      },
+      {
         path: 'inventory/:id/edit',
         loadComponent: () => import('./features/inventory/inventory-edit/inventory-edit.component').then((c) => c.InventoryEditComponent),
         canActivate: [authGuard]

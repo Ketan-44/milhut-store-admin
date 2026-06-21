@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import {
   FormArray,
@@ -11,6 +11,7 @@ import {
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { resource } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
+import { firstValueFrom } from 'rxjs';
 import { Product } from '../../products/models/product.model';
 import { ProductType } from '../../products/models/product-type.enum';
 import { ProductUnit } from '../../products/models/product-unit.enum';
@@ -22,6 +23,7 @@ import {
   getQuantityStep,
   isValidDisplayQuantity,
 } from '../../inventory/utils/quantity.util';
+import { Recipe } from '../models/recipe.model';
 import { RecipeService } from '../services/recipe.service';
 
 type IngredientFormGroup = FormGroup<{
@@ -42,10 +44,23 @@ export class RecipeFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+  private cdr = inject(ChangeDetectorRef);
 
   recipeId: string | null = null;
   isEditMode = false;
-  loadingRecipe = false;
+  isCopyMode = false;
+  copiedFromName = '';
+  loadingRecipe = signal(false);
+
+  isFormLoading = computed(
+    () =>
+      this.loadingRecipe() ||
+      (this.formDataResource.isLoading() && !this.formDataResource.hasValue()),
+  );
+
+  canShowForm = computed(
+    () => this.formDataResource.hasValue() && !this.loadingRecipe(),
+  );
 
   submitted = false;
   saving = false;
@@ -77,39 +92,16 @@ export class RecipeFormComponent implements OnInit {
   ngOnInit(): void {
     this.recipeId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.recipeId;
+    const copyFromId = this.route.snapshot.queryParamMap.get('copyFrom');
+    this.isCopyMode = !this.isEditMode && !!copyFromId;
 
     if (this.isEditMode && this.recipeId) {
-      this.loadingRecipe = true;
+      this.loadRecipe(this.recipeId, { copy: false });
+      return;
+    }
 
-      this.recipeService.getById(this.recipeId).subscribe({
-        next: (response) => {
-          this.loadingRecipe = false;
-          this.recipeForm.patchValue({
-            name: response.data.name,
-            finishedProductId: response.data.finishedProductId,
-          });
-
-          this.ingredients.clear();
-
-          for (const ingredient of response.data.ingredients ?? []) {
-            this.ingredients.push(
-              this.fb.nonNullable.group({
-                productId: [ingredient.productId, Validators.required],
-                quantity: [ingredient.quantity, [Validators.required, Validators.min(0.001)]],
-              }),
-            );
-          }
-
-          if (this.ingredients.length === 0) {
-            this.ingredients.push(this.createIngredientGroup());
-          }
-        },
-        error: (error) => {
-          this.loadingRecipe = false;
-          this.errorMessage = error.message ?? 'Failed to load recipe.';
-          this.toastr.error(this.errorMessage, 'Error');
-        },
-      });
+    if (copyFromId) {
+      this.loadRecipe(copyFromId, { copy: true });
     }
   }
 
@@ -228,7 +220,90 @@ export class RecipeFormComponent implements OnInit {
           error.message ??
           (this.isEditMode ? 'Failed to update recipe.' : 'Failed to create recipe.');
         this.toastr.error(this.errorMessage, 'Error');
+        this.cdr.markForCheck();
       },
     });
+  }
+
+  private loadRecipe(id: string, options: { copy: boolean }): void {
+    this.loadingRecipe.set(true);
+
+    void this.waitForFormData()
+      .then(() => firstValueFrom(this.recipeService.getById(id)))
+      .then((response) => {
+        if (options.copy) {
+          this.copiedFromName = response.data.name;
+        }
+
+        this.applyRecipeToForm(response.data, options);
+        this.loadingRecipe.set(false);
+        this.cdr.markForCheck();
+      })
+      .catch((error: unknown) => {
+        this.loadingRecipe.set(false);
+        this.handleLoadError(error, 'Failed to load recipe.');
+        this.cdr.markForCheck();
+      });
+  }
+
+  private waitForFormData(): Promise<void> {
+    if (this.formDataResource.hasValue()) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const check = (): void => {
+        if (this.formDataResource.hasValue()) {
+          resolve();
+          return;
+        }
+
+        if (this.formDataResource.error()) {
+          reject(this.formDataResource.error());
+          return;
+        }
+
+        window.setTimeout(check, 0);
+      };
+
+      check();
+    });
+  }
+
+  private applyRecipeToForm(recipe: Recipe, options: { copy: boolean }): void {
+    this.recipeForm.patchValue(
+      {
+        name: options.copy
+          ? `Copy of ${recipe.name}`.slice(0, 100)
+          : recipe.name,
+        finishedProductId: recipe.finishedProductId,
+      },
+      { emitEvent: false },
+    );
+
+    this.ingredients.clear();
+
+    for (const ingredient of recipe.ingredients ?? []) {
+      this.ingredients.push(
+        this.fb.nonNullable.group({
+          productId: [ingredient.productId, Validators.required],
+          quantity: [ingredient.quantity, [Validators.required, Validators.min(0.001)]],
+        }),
+      );
+    }
+
+    if (this.ingredients.length === 0) {
+      this.ingredients.push(this.createIngredientGroup());
+    }
+  }
+
+  private handleLoadError(error: unknown, fallbackMessage: string): void {
+    this.errorMessage =
+      error instanceof Error
+        ? error.message
+        : error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: string }).message)
+          : fallbackMessage;
+    this.toastr.error(this.errorMessage, 'Error');
   }
 }

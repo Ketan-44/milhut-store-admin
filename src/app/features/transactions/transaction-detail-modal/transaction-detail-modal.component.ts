@@ -43,6 +43,42 @@ export class TransactionDetailModalComponent implements OnInit {
     this.closed.emit();
   }
 
+  print(): void {
+    const item = this.transaction();
+
+    if (!item) {
+      return;
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    document.body.appendChild(iframe);
+
+    const printWindow = iframe.contentWindow;
+
+    if (!printWindow) {
+      iframe.remove();
+      this.error.set('Unable to prepare print view.');
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(this.buildPrintHtml(item));
+    printWindow.document.close();
+
+    const cleanup = () => iframe.remove();
+
+    printWindow.onafterprint = cleanup;
+    printWindow.focus();
+    printWindow.print();
+
+    setTimeout(cleanup, 2000);
+  }
+
   getTypeBadgeClass(type: TransactionType): string {
     switch (type) {
       case TransactionType.SALE:
@@ -109,6 +145,148 @@ export class TransactionDetailModalComponent implements OnInit {
     }
 
     return formatDisplayQuantity(batch.remainingQuantity, product.unit);
+  }
+
+  private buildPrintHtml(item: Transaction): string {
+    const rows: string[] = [];
+
+    if (item.createdAt) {
+      rows.push(this.buildPrintRow('Date', this.formatDateTime(item.createdAt)));
+    }
+
+    rows.push(this.buildPrintRow('Type', this.toTitleCase(item.type)));
+    rows.push(
+      this.buildPrintRow(
+        'Product',
+        this.toTitleCase(this.getProduct(item)?.name ?? '—'),
+      ),
+    );
+    rows.push(this.buildPrintRow('Quantity', this.getTransactionQuantity(item)));
+    rows.push(
+      this.buildPrintRow('Performed By', this.escapeHtml(this.getUser(item)?.name ?? '—')),
+    );
+    rows.push(this.buildPrintRow('Remarks', this.escapeHtml(item.remarks ?? '—')));
+
+    const batch = this.getBatch(item);
+
+    if (batch) {
+      rows.push(
+        this.buildPrintRow(
+          'Batch',
+          `${this.escapeHtml(batch.batchNumber)} (${this.toTitleCase(batch.batchType)})`,
+        ),
+      );
+
+      if (batch.expiryDate) {
+        rows.push(this.buildPrintRow('Expiry', this.formatDate(batch.expiryDate)));
+      }
+
+      if (batch.quantity !== undefined) {
+        rows.push(
+          this.buildPrintRow(
+            'Batch Qty',
+            `${this.getBatchQuantity(item)} (remaining: ${this.getBatchRemaining(item)})`,
+          ),
+        );
+      }
+
+      if (batch.producedFrom?.length) {
+        const producedFromHtml = batch.producedFrom
+          .map((consumption) => {
+            const batchesHtml = consumption.batches
+              .map(
+                (sourceBatch) =>
+                  `<li>${this.escapeHtml(sourceBatch.batchNumber)} — ${this.getIngredientQuantity(consumption.productId, sourceBatch.quantity)}</li>`,
+              )
+              .join('');
+
+            return `<li><strong>${this.toTitleCase(consumption.productName)}</strong><ul>${batchesHtml}</ul></li>`;
+          })
+          .join('');
+
+        rows.push(
+          `<tr><td class="label">Produced From</td><td><ul class="nested-list">${producedFromHtml}</ul></td></tr>`,
+        );
+      }
+    }
+
+    return `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Transaction - ${this.escapeHtml(item._id)}</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 24px;
+        color: #212529;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 1rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      td {
+        padding: 0.4rem 0;
+        vertical-align: top;
+      }
+
+      .label {
+        width: 140px;
+        color: #6c757d;
+        font-size: 0.875rem;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+
+      .nested-list ul {
+        margin-top: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Transaction Details</h1>
+    <table>${rows.join('')}</table>
+  </body>
+</html>`;
+  }
+
+  private buildPrintRow(label: string, value: string): string {
+    return `<tr><td class="label">${this.escapeHtml(label)}</td><td>${value}</td></tr>`;
+  }
+
+  private formatDateTime(value: string): string {
+    return new Date(value).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  }
+
+  private formatDate(value: string): string {
+    return new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  }
+
+  private toTitleCase(value: string): string {
+    return this.escapeHtml(
+      value.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()),
+    );
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private async loadTransaction(): Promise<void> {
