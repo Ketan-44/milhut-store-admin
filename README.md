@@ -114,10 +114,10 @@ ng e2e
 ## Deployment
 
 Example production build:
+1. npm run build-prod
 
-```bash
-ng build --configuration production
-```
+Example github pages deployment:
+2. npx angular-cli-ghpages --dir=dist 
 
 ## License
 
