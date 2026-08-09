@@ -91,7 +91,7 @@
                   </span>
                 </td>
                 <td>{{ (getTransactionProduct(transaction)?.name ?? '—') | titlecase }}</td>
-                <td>{{ getTransactionBatch(transaction)?.batchNumber ?? '—' }}</td>
+                <td>{{ (getTransactionBatch(transaction)?.batchNumber | noSpecialCharLabel: true) ?? '—' }}</td>
                 <!-- <td>{{ getProducedFromLabel(transaction) }}</td> -->
                 <td>{{ getTransactionQuantity(transaction) }}</td>
                 <td>{{ getTransactionUser(transaction)?.name ?? '—' }}</td>

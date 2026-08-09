@@ -25,6 +25,7 @@ import {
 } from '../../inventory/utils/quantity.util';
 import { Recipe } from '../models/recipe.model';
 import { RecipeService } from '../services/recipe.service';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 type IngredientFormGroup = FormGroup<{
   productId: FormControl<string>;
@@ -33,7 +34,7 @@ type IngredientFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-recipe-form',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
   templateUrl: './recipe-form.component.html',
   styleUrl: './recipe-form.component.scss',
 })
@@ -72,13 +73,17 @@ export class RecipeFormComponent implements OnInit {
 
       return {
         finishedProducts: products.filter(
-          (product) => product.type === ProductType.FINISHED,
-        ),
-        ingredientProducts: products.filter(
           (product) =>
-            product.type === ProductType.RAW ||
+            // product.type === ProductType.SEMI_FINISHED ||
             product.type === ProductType.FINISHED,
         ),
+        ingredientProducts: products,
+        // ingredientProducts: products.filter(
+        //   (product) =>
+        //     product.type === ProductType.RAW ||
+        //     product.type === ProductType.SEMI_FINISHED ||
+        //     product.type === ProductType.FINISHED,
+        // ),
       };
     },
   });

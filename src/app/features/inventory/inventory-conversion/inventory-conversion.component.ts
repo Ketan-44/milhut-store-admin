@@ -67,7 +67,10 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
           return true;
         }),
         finishedProducts: products.filter(
-          (product) => product.isActive && product.type === ProductType.FINISHED,
+          (product) =>
+            product.isActive &&
+            (product.type === ProductType.SEMI_FINISHED ||
+              product.type === ProductType.FINISHED),
         ),
         products: new Map(products.map((product) => [product._id, product])),
       };

@@ -17,10 +17,11 @@ import {
   pieceQuantityValidator,
   toDisplayQuantity,
 } from '../../inventory/utils/quantity.util';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 @Component({
   selector: 'app-product-form',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
   templateUrl: './product-form.component.html',
   styleUrl: './product-form.component.scss',
 })
@@ -164,12 +165,12 @@ export class ProductFormComponent {
     const request$ =
       this.isEditMode && this.productId
         ? this.productService.update(this.productId, {
-            ...payload,
-            isActive: isActive ?? true,
-            ...(lowStockAlert == null || lowStockAlert === 0
-              ? { lowStockAlert: 0 }
-              : {}),
-          })
+          ...payload,
+          isActive: isActive ?? true,
+          ...(lowStockAlert == null || lowStockAlert === 0
+            ? { lowStockAlert: 0 }
+            : {}),
+        })
         : this.productService.create(payload);
 
     request$.subscribe({

@@ -74,7 +74,7 @@
             @for (product of productResource.value()?.items ?? []; track product._id) {
               <tr>
                 <td>{{ product.name | titlecase }}</td>
-                <td>{{ product.type | titlecase }}</td>
+                <td>{{ product.type | noSpecialCharLabel | titlecase }}</td>
                 <td>{{ product.unit | titlecase }}</td>
                 <td>{{ getMinimumQuantityLabel(product) }}</td>
                 <td>

@@ -18,12 +18,13 @@ import {
   getUnitDisplayLabel,
   toDisplayQuantity,
 } from '../../inventory/utils/quantity.util';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss'],
-  imports: [NgClass, TitleCasePipe, RouterModule, PaginationComponent, SortableHeaderComponent, ListToolbarComponent, TableIconActionComponent],
+  imports: [NgClass, TitleCasePipe, RouterModule, PaginationComponent, SortableHeaderComponent, ListToolbarComponent, TableIconActionComponent, NoSpecialCharLabelPipe],
 })
 export class ProductListComponent {
   private productService = inject(ProductService);

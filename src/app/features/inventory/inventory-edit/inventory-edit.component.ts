@@ -23,6 +23,7 @@ import {
   optionalExpiryDateValidators,
   getTodayDateString,
 } from 'src/app/theme/shared/utils/date.util';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 type BatchFormData = {
   batch: BatchLookup;
@@ -31,7 +32,7 @@ type BatchFormData = {
 
 @Component({
   selector: 'app-inventory-edit',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
   templateUrl: './inventory-edit.component.html',
   styleUrl: './inventory-edit.component.scss',
 })
@@ -61,7 +62,9 @@ export class InventoryEditComponent implements OnInit, OnDestroy {
       const eligibleProducts = products.filter(
         (product) =>
           product.isActive &&
-          (product.type === ProductType.RAW || product.type === ProductType.FINISHED),
+          (product.type === ProductType.RAW ||
+            product.type === ProductType.SEMI_FINISHED ||
+            product.type === ProductType.FINISHED),
       );
       const currentProduct = products.find(
         (product) => product._id === batchData.product.id,

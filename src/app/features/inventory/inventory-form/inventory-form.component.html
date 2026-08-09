@@ -23,14 +23,14 @@
               <option value="" disabled>Select product</option>
               @for (product of products; track product._id) {
                 <option [value]="product._id">
-                  {{ product.name | titlecase }} ({{ product.type | titlecase }} / {{ product.unit | titlecase }})
+                  {{ product.name | titlecase }} ({{ product.type | noSpecialCharLabel | titlecase }} / {{ product.unit | titlecase }})
                 </option>
               }
             </select>
 
-            @if (batchTypeHint) {
+            <!-- @if (batchTypeHint) {
               <small class="text-muted d-block mt-1">{{ batchTypeHint }}</small>
-            }
+            } -->
 
             @if (f.productId.invalid && (f.productId.touched || submitted)) {
               <div class="invalid-feedback">Product is required.</div>

@@ -68,7 +68,7 @@ export function getUnitDisplayLabel(unit: ProductUnit): string {
 
 export function getQuantityHint(unit: ProductUnit): string {
   if (isWeightUnit(unit)) {
-    return 'Enter quantity in kilograms (e.g. 1, 1.5, 2.25). It is stored as grams in the system.';
+    return 'Enter quantity in kilograms (e.g. 1, 1.5, 2.25).';
   }
 
   return 'Enter quantity in whole pieces (e.g. 1, 10).';

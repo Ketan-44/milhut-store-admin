@@ -44,7 +44,7 @@
               [class.is-invalid]="f.type.invalid && (f.type.touched || submitted)"
             >
               @for (type of productTypes; track type) {
-                <option [value]="type">{{ type | titlecase }}</option>
+                <option [value]="type">{{ type | noSpecialCharLabel | titlecase }}</option>
               }
             </select>
 
