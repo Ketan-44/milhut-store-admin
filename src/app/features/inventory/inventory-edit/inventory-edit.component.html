@@ -33,7 +33,7 @@
               <option value="" disabled>Select product</option>
               @for (product of products; track product._id) {
                 <option [value]="product._id">
-                  {{ product.name | titlecase }} ({{ product.type | titlecase }} / {{ product.unit | titlecase }})
+                  {{ product.name | titlecase }} ({{ product.type | noSpecialCharLabel | titlecase }} / {{ product.unit | titlecase }})
                 </option>
               }
             </select>

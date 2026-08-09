@@ -23,10 +23,11 @@ import {
   optionalExpiryDateValidators,
   getTodayDateString,
 } from 'src/app/theme/shared/utils/date.util';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 @Component({
   selector: 'app-inventory-form',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
   templateUrl: './inventory-form.component.html',
   styleUrl: './inventory-form.component.scss',
 })
@@ -46,7 +47,9 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
         products: products.filter(
           (product) =>
             product.isActive &&
-            (product.type === ProductType.RAW || product.type === ProductType.FINISHED),
+            (product.type === ProductType.RAW ||
+              product.type === ProductType.SEMI_FINISHED ||
+              product.type === ProductType.FINISHED),
         ),
       };
     },
@@ -107,19 +110,19 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     return getQuantityHint(product.unit);
   }
 
-  get batchTypeHint(): string {
-    const product = this.selectedProduct;
+  // get batchTypeHint(): string {
+  //   const product = this.selectedProduct;
 
-    if (!product) {
-      return '';
-    }
+  //   if (!product) {
+  //     return '';
+  //   }
 
-    if (product.type === ProductType.RAW) {
-      return 'Stock will be recorded as a Raw batch (IN transaction).';
-    }
+  //   if (product.type === ProductType.RAW) {
+  //     return 'Stock will be recorded as a Raw batch (IN transaction).';
+  //   }
 
-    return 'Stock will be recorded as a Finished batch (PRODUCED transaction).';
-  }
+  //   return 'Stock will be recorded as a Finished batch (PRODUCED transaction).';
+  // }
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -189,6 +192,8 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
     switch (productType) {
       case ProductType.RAW:
         return BatchType.RAW;
+      case ProductType.SEMI_FINISHED:
+        return BatchType.SEMI_FINISHED;
       case ProductType.FINISHED:
         return BatchType.FINISHED;
       default:

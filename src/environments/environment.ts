@@ -7,8 +7,8 @@ import packageInfo from '../../package.json';
 export const environment = {
   appVersion: packageInfo.version,
   production: false,
-  // apiUrl: 'http://192.168.29.22:3000/api'
-  apiUrl: 'https://milhut-store-api-production.up.railway.app/api'
+  apiUrl: 'http://localhost:3000/api'
+  // apiUrl: 'https://milhut-store-api-production.up.railway.app/api'
 };
 
 /*

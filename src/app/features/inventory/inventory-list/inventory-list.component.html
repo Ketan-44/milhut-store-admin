@@ -87,11 +87,11 @@
           <tbody>
             @for (batch of inventoryResource.value()?.items ?? []; track batch._id) {
               <tr>
-                <td>{{ batch.batchNumber }}</td>
+                <td>{{ batch.batchNumber | noSpecialCharLabel: true}}</td>
                 <td>
                   {{ getProductName(batch.productId, products) | titlecase }}
                 </td>
-                <td>{{ batch.batchType | titlecase }}</td>
+                <td>{{ batch.batchType | noSpecialCharLabel | titlecase }}</td>
                 <td>
                   {{
                     getDisplayQuantity(

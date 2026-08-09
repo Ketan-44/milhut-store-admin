@@ -39,6 +39,7 @@ import {
 } from '../models/transaction.model';
 import { TransactionService } from '../services/transaction.service';
 import { TransactionDetailModalComponent } from '../transaction-detail-modal/transaction-detail-modal.component';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 @Component({
   selector: 'app-transaction-page',
@@ -51,6 +52,7 @@ import { TransactionDetailModalComponent } from '../transaction-detail-modal/tra
     SortableHeaderComponent,
     ListToolbarComponent,
     TableIconActionComponent,
+    NoSpecialCharLabelPipe
   ],
   templateUrl: './transaction-page.component.html',
   styleUrl: './transaction-page.component.scss',

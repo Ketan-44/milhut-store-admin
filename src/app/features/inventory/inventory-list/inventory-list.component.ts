@@ -21,6 +21,7 @@ import {
 } from '../inventory-qr-preview/inventory-qr-preview.component';
 import { InventoryService } from '../services/inventory.service';
 import { formatDisplayQuantity } from '../utils/quantity.util';
+import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialCharLabel.pipe';
 
 @Component({
   selector: 'app-inventory-list',
@@ -35,6 +36,7 @@ import { formatDisplayQuantity } from '../utils/quantity.util';
     SortableHeaderComponent,
     ListToolbarComponent,
     TableIconActionComponent,
+    NoSpecialCharLabelPipe
   ],
 })
 export class InventoryListComponent {
