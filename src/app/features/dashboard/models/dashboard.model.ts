@@ -18,6 +18,26 @@ export interface LiveInventoryItem {
 
 export type LiveInventoryResult = PaginatedResult<LiveInventoryItem>;
 
+export interface ExpiringInventoryItem {
+  batchId: string;
+  batchNumber: string;
+  productId: string;
+  productName: string;
+  productType: ProductType;
+  unit: ProductUnit;
+  remainingQuantity: number;
+  displayRemainingQuantity: number;
+  expiryDate: string;
+  daysUntilExpiry: number;
+  status: 'expired' | 'expiring';
+}
+
+export type ExpiringInventoryResult = PaginatedResult<ExpiringInventoryItem>;
+
+export interface ExpiringInventoryQuery extends PaginationQuery {
+  days?: number;
+}
+
 export interface DashboardDateRangeQuery extends PaginationQuery {
   startDate?: string;
   endDate?: string;

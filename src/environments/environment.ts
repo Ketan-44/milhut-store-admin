@@ -7,7 +7,11 @@ import packageInfo from '../../package.json';
 export const environment = {
   appVersion: packageInfo.version,
   production: false,
+<<<<<<< HEAD
   // apiUrl: 'http://192.168.29.22:3000/api'
+=======
+  // apiUrl: 'http://localhost:3000/api'
+>>>>>>> development
   apiUrl: 'https://milhut-store-api.vercel.app/api'
 };
 

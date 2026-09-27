@@ -1,6 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconDirective, IconService } from '@ant-design/icons-angular';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { SearchOutline } from '@ant-design/icons-angular/icons';
 import {
   DEFAULT_PAGE_LIMIT,
@@ -9,7 +10,7 @@ import {
 
 @Component({
   selector: 'app-list-toolbar',
-  imports: [FormsModule, IconDirective],
+  imports: [FormsModule, IconDirective, NgSelectModule],
   templateUrl: './list-toolbar.component.html',
   styleUrl: './list-toolbar.component.scss',
 })

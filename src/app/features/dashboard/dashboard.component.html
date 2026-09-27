@@ -111,6 +111,74 @@
     }
   </div>
 
+  <app-card cardTitle="Expiry Alerts" cardClass="dashboard-section-card mb-4" [padding]="0">
+    <ng-template #headerOptionsTemplate>
+      @if (expiringInventoryResource.hasValue()) {
+        <span
+          class="badge"
+          [class.bg-danger]="(expiringInventoryResource.value()?.meta?.total ?? 0) > 0"
+          [class.bg-success]="(expiringInventoryResource.value()?.meta?.total ?? 0) === 0"
+        >
+          {{ expiringInventoryResource.value()?.meta?.total ?? 0 }} batches
+        </span>
+      }
+    </ng-template>
+
+    @if (expiringInventoryResource.isLoading()) {
+      <div class="p-4 text-muted">Loading expiry alerts...</div>
+    } @else if (expiringInventoryResource.error()) {
+      <div class="p-4 text-danger">Failed to load expiry alerts.</div>
+    } @else if (expiringInventoryResource.hasValue()) {
+      @if (expiringInventoryResource.value()?.items?.length) {
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 dashboard-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Batch</th>
+                <th>Remaining</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (batch of expiringInventoryResource.value()?.items ?? []; track batch.batchId) {
+                <tr>
+                  <td>{{ batch.productName | titlecase }}</td>
+                  <td>{{ batch.batchNumber }}</td>
+                  <td>{{ getExpiringQuantityLabel(batch) }}</td>
+                  <td>{{ batch.expiryDate | date: 'mediumDate' }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [class.bg-danger]="batch.status === 'expired'"
+                      [class.bg-warning]="batch.status === 'expiring'"
+                      [class.text-dark]="batch.status === 'expiring'"
+                    >
+                      @if (batch.status === 'expired') {
+                        Expired
+                      } @else {
+                        Expires in {{ batch.daysUntilExpiry }} days
+                      }
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (expiringInventoryResource.value()?.meta; as meta) {
+          <div class="px-3 pb-3">
+            <app-pagination [meta]="meta" (pageChange)="onExpiringPageChange($event)" />
+          </div>
+        }
+      } @else {
+        <div class="p-4 text-muted">No batches are expired or expiring in the next 30 days.</div>
+      }
+    }
+  </app-card>
+
   <app-card cardTitle="Live Inventory" cardClass="dashboard-section-card mb-4" [padding]="0">
     <ng-template #headerOptionsTemplate>
       <button

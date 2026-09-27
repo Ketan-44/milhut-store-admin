@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { firstValueFrom } from 'rxjs';
 import { PaginationComponent } from 'src/app/theme/shared/components/pagination/pagination.component';
 import { SortableHeaderComponent } from 'src/app/theme/shared/components/sortable-header/sortable-header.component';
@@ -21,7 +22,7 @@ import {
   getQuantityStep,
   getUnitDisplayLabel,
 } from '../../inventory/utils/quantity.util';
-import { Recipe } from '../models/recipe.model';
+import { Recipe, RecipeKind, RecipeIngredient } from '../models/recipe.model';
 import { ProductionResult } from '../models/production.model';
 import { ProductionService } from '../services/production.service';
 import { RecipeService } from '../services/recipe.service';
@@ -32,7 +33,7 @@ import {
 
 @Component({
   selector: 'app-production-page',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, PaginationComponent, SortableHeaderComponent, TableIconActionComponent],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, PaginationComponent, SortableHeaderComponent, TableIconActionComponent, NgSelectModule],
   providers: [TitleCasePipe],
   templateUrl: './production-page.component.html',
   styleUrl: './production-page.component.scss',
@@ -81,9 +82,12 @@ export class ProductionPageComponent {
     },
   });
 
-  productionForm = this.fb.nonNullable.group({
-    recipeId: ['', Validators.required],
-    outputQuantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
+  productionForm = this.fb.group({
+    recipeId: this.fb.control<string | null>(null, Validators.required),
+    outputQuantity: this.fb.control<number | null>(
+      null,
+      [Validators.required, Validators.min(0.001)]
+    ),
     expiryDate: ['', expiryDateValidators(this.minExpiryDate)],
     remarks: [''],
   });
@@ -100,6 +104,12 @@ export class ProductionPageComponent {
     return this.pageDataResource.value()?.allRecipes ?? [];
   }
 
+  get runnableRecipes(): Recipe[] {
+    return this.allRecipes.filter(
+      (recipe) => (recipe.recipeKind ?? 'PRODUCT') === 'PRODUCT',
+    );
+  }
+
   get products(): Map<string, Product> {
     return this.pageDataResource.value()?.products ?? new Map();
   }
@@ -107,6 +117,18 @@ export class ProductionPageComponent {
   get selectedRecipe(): Recipe | undefined {
     const recipeId = this.productionForm.controls.recipeId.value;
     return this.allRecipes.find((recipe) => recipe._id === recipeId);
+  }
+
+  getRecipeKind(recipe: Recipe): RecipeKind {
+    return recipe.recipeKind ?? 'PRODUCT';
+  }
+
+  getRecipeOutputLabel(recipe: Recipe): string {
+    if (this.getRecipeKind(recipe) === 'SEMI_RECIPE') {
+      const unit = recipe.yieldUnit ? getUnitDisplayLabel(recipe.yieldUnit) : '';
+      return `Semi-recipe yield: ${recipe.yieldQuantity ?? 0} ${unit}`.trim();
+    }
+    return this.getProductName(recipe.finishedProductId);
   }
 
   get selectedFinishedProduct(): Product | undefined {
@@ -159,6 +181,9 @@ export class ProductionPageComponent {
   }
 
   runProductionForRecipe(recipeId: string): void {
+    if (!this.runnableRecipes.some((recipe) => recipe._id === recipeId)) {
+      return;
+    }
     this.activeTab = 'run';
     this.lastResult = null;
     this.errorMessage = '';
@@ -194,7 +219,10 @@ export class ProductionPageComponent {
     });
   }
 
-  getProductName(productId: string): string {
+  getProductName(productId?: string): string {
+    if (!productId) {
+      return 'No finished product';
+    }
     return this.products.get(productId)?.name ?? productId;
   }
 
@@ -208,6 +236,29 @@ export class ProductionPageComponent {
     return getUnitDisplayLabel(product.unit);
   }
 
+  getRecipeName(recipeId?: string): string {
+    return this.allRecipes.find((recipe) => recipe._id === recipeId)?.name ?? recipeId ?? '';
+  }
+
+  getRecipeYieldUnitLabel(recipeId?: string): string {
+    const recipe = this.allRecipes.find((item) => item._id === recipeId);
+    return recipe?.yieldUnit ? getUnitDisplayLabel(recipe.yieldUnit) : '';
+  }
+
+  getIngredientName(ingredient: RecipeIngredient): string {
+    return ingredient.recipeId
+      ? this.getRecipeName(ingredient.recipeId)
+      : this.getProductName(ingredient.productId);
+  }
+
+  getIngredientUnit(ingredient: RecipeIngredient): string {
+    return ingredient.recipeId
+      ? this.getRecipeYieldUnitLabel(ingredient.recipeId)
+      : ingredient.productId
+        ? this.getIngredientUnitLabel(ingredient.productId)
+        : '';
+  }
+
   getIngredientDisplay(recipe: Recipe): string {
     if (!recipe.ingredients?.length) {
       return '—';
@@ -215,12 +266,10 @@ export class ProductionPageComponent {
 
     return recipe.ingredients
       .map((ingredient) => {
-        const product = this.products.get(ingredient.productId);
-        const unit = product ? getUnitDisplayLabel(product.unit) : '';
         const productName = this.titleCasePipe.transform(
-          this.getProductName(ingredient.productId),
+          this.getIngredientName(ingredient),
         );
-        return `${productName} (${ingredient.quantity} ${unit})`;
+        return `${productName} (${ingredient.quantity} ${this.getIngredientUnit(ingredient)})`;
       })
       .join(', ');
   }

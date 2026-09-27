@@ -35,6 +35,12 @@ export class TransactionService {
     );
   }
 
+  deleteSale(id: string) {
+    return this.http.delete<ApiResponse<{ message: string }>>(
+      `${environment.apiUrl}/transaction/${id}`,
+    );
+  }
+
   private buildParams(query: PaginationQuery): HttpParams {
     return appendPaginationParams(new HttpParams(), query);
   }

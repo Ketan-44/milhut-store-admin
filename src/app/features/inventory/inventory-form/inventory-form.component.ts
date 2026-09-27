@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { Subscription } from 'rxjs';
 import { BatchType } from '../models/batch-type.enum';
 import { CreateInventory } from '../models/inventory.model';
@@ -27,7 +28,7 @@ import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialChar
 
 @Component({
   selector: 'app-inventory-form',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe, NgSelectModule],
   templateUrl: './inventory-form.component.html',
   styleUrl: './inventory-form.component.scss',
 })
@@ -61,7 +62,7 @@ export class InventoryFormComponent implements OnInit, OnDestroy {
   readonly minExpiryDate = getTodayDateString();
 
   inventoryForm = this.fb.nonNullable.group({
-    productId: ['', Validators.required],
+    productId: [null, Validators.required],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     expiryDate: ['', optionalExpiryDateValidators(this.minExpiryDate)],
     sourceName: ['', Validators.maxLength(200)],

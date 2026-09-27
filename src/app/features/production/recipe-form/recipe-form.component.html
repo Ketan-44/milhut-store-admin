@@ -36,35 +36,95 @@
           </div>
 
           <div class="form-group mb-3">
-            <label class="form-label" for="finishedProductId">Finished Product</label>
+            <label class="form-label" for="recipeKind">Recipe Type</label>
             <select
-              id="finishedProductId"
+              id="recipeKind"
               class="form-select"
-              formControlName="finishedProductId"
-              [class.is-invalid]="f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)"
+              formControlName="recipeKind"
+              [disabled]="isEditMode"
+              (change)="setRecipeKind(f.recipeKind.value)"
             >
-              <option value="" disabled>Select finished product</option>
-              @for (product of finishedProducts; track product._id) {
-                <option [value]="product._id">
-                  {{ product.name | titlecase }} ({{ product.unit | titlecase }})
-                </option>
-              }
+              <option value="PRODUCT">Finished product recipe</option>
+              <option value="SEMI_RECIPE">Reusable semi-recipe</option>
             </select>
-
-            @if (f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)) {
-              <div class="invalid-feedback">Finished product is required.</div>
-            }
-
-            @if (finishedProducts.length === 0) {
-              <small class="text-warning d-block mt-1">
-                No finished products found. Create a FINISHED product first.
-              </small>
-            }
           </div>
+
+          @if (f.recipeKind.value === 'PRODUCT') {
+            <div class="form-group mb-3">
+              <label class="form-label" for="finishedProductId">Finished Product</label>
+              <ng-select
+                id="finishedProductId"
+                labelForId="finishedProductId"
+                formControlName="finishedProductId"
+                placeholder="Select finished product"
+                [searchable]="true"
+                [clearable]="false"
+                [class.is-invalid]="f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)"
+              >
+                @for (product of finishedProducts; track product._id) {
+                  <ng-option [value]="product._id">
+                    {{ product.name | titlecase }} ({{ product.unit | titlecase }})
+                  </ng-option>
+                }
+              </ng-select>
+
+              @if (f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)) {
+                <div class="invalid-feedback d-block">Finished product is required.</div>
+              }
+
+              @if (finishedProducts.length === 0) {
+                <small class="text-warning d-block mt-1">
+                  No finished products found. Create a FINISHED product first.
+                </small>
+              }
+            </div>
+          } @else {
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label" for="yieldQuantity">{{ getSemiRecipeYieldLabel() }}</label>
+                <input
+                  id="yieldQuantity"
+                  type="number"
+                  class="form-control"
+                  formControlName="yieldQuantity"
+                  [step]="getQuantityStep(f.yieldUnit.value ?? ProductUnit.WEIGHT)"
+                  [min]="getQuantityMin(f.yieldUnit.value ?? ProductUnit.WEIGHT)"
+                  [placeholder]="getQuantityPlaceholder(f.yieldUnit.value ?? ProductUnit.WEIGHT)"
+                  [class.is-invalid]="f.yieldQuantity.invalid && (f.yieldQuantity.touched || submitted)"
+                  (input)="onYieldQuantityInput()"
+                />
+                @if (getIngredientTotalForYield() !== null) {
+                  <button
+                    type="button"
+                    class="btn btn-link btn-sm px-0"
+                    (click)="useIngredientTotal()"
+                  >
+                    Use ingredient total
+                  </button>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="yieldUnit">Yield Unit</label>
+                <select
+                  id="yieldUnit"
+                  class="form-select"
+                  formControlName="yieldUnit"
+                  (change)="updateYieldFromIngredientTotal()"
+                >
+                  <option [ngValue]="ProductUnit.WEIGHT">kg</option>
+                  <option [ngValue]="ProductUnit.PIECE">Piece</option>
+                </select>
+              </div>
+            </div>
+          }
 
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <label class="form-label mb-0">Ingredients (per 1 output unit)</label>
+              <label class="form-label mb-0">
+                Ingredients
+                @if (f.recipeKind.value === 'PRODUCT') { (per 1 output unit) }
+                @else { (for the yield above) }
+              </label>
               <button type="button" class="btn btn-outline-primary btn-sm" (click)="addIngredient()">
                 Add Ingredient
               </button>
@@ -73,38 +133,72 @@
             <div formArrayName="ingredients">
               @for (_ingredient of ingredients.controls; track $index; let i = $index) {
                 <div class="row g-2 mb-2 align-items-end" [formGroupName]="i">
-                  <div class="col-md-6">
-                    <label class="form-label" [for]="'ingredient-product-' + i">Product</label>
+                  <div class="col-md-3">
+                    <label class="form-label" [for]="'ingredient-kind-' + i">Ingredient Type</label>
                     <select
-                      [id]="'ingredient-product-' + i"
+                      [id]="'ingredient-kind-' + i"
                       class="form-select"
-                      formControlName="productId"
-                      [class.is-invalid]="
-                        getIngredientGroup(i).controls.productId.invalid &&
-                        (getIngredientGroup(i).controls.productId.touched || submitted)
-                      "
+                      formControlName="ingredientKind"
+                      (change)="setIngredientKind(i, getIngredientGroup(i).controls.ingredientKind.value)"
                     >
-                      <option value="" disabled>Select ingredient</option>
-                      @for (product of ingredientProducts; track product._id) {
-                        <option [value]="product._id">
-                          {{ product.name | titlecase }} ({{ product.type | noSpecialCharLabel | titlecase }} / {{ product.unit | titlecase }})
-                        </option>
-                      }
+                      <option value="PRODUCT">Product</option>
+                      <option value="SEMI_RECIPE">Semi-recipe</option>
                     </select>
                   </div>
 
+                  @if (getIngredientGroup(i).controls.ingredientKind.value === 'PRODUCT') {
+                    <div class="col-md-5">
+                      <label class="form-label" [for]="'ingredient-product-' + i">Product</label>
+                      <ng-select
+                        [id]="'ingredient-product-' + i"
+                        [labelForId]="'ingredient-product-' + i"
+                        formControlName="productId"
+                        placeholder="Select ingredient"
+                        [searchable]="true"
+                        [clearable]="false"
+                        (change)="updateYieldFromIngredientTotal()"
+                      >
+                        @for (product of ingredientProducts; track product._id) {
+                          <ng-option [value]="product._id">
+                            {{ product.name | titlecase }} ({{ product.type | noSpecialCharLabel | titlecase }} / {{ product.unit | titlecase }})
+                          </ng-option>
+                        }
+                      </ng-select>
+                    </div>
+                  } @else {
+                    <div class="col-md-5">
+                      <label class="form-label" [for]="'ingredient-recipe-' + i">Semi-recipe</label>
+                      <ng-select
+                        [id]="'ingredient-recipe-' + i"
+                        [labelForId]="'ingredient-recipe-' + i"
+                        formControlName="recipeId"
+                        placeholder="Select semi-recipe"
+                        [searchable]="true"
+                        [clearable]="false"
+                        (change)="updateYieldFromIngredientTotal()"
+                      >
+                        @for (recipe of semiRecipes; track recipe._id) {
+                          <ng-option [value]="recipe._id">
+                            {{ recipe.name | titlecase }} ({{ recipe.yieldQuantity }} {{ recipe.yieldUnit | titlecase }})
+                          </ng-option>
+                        }
+                      </ng-select>
+                    </div>
+                  }
+
                   <div class="col-md-4">
                     <label class="form-label" [for]="'ingredient-qty-' + i">
-                      {{ getIngredientQuantityLabel(getIngredientGroup(i).controls.productId.value) }}
+                      {{ getIngredientQuantityLabelForRow(i) }}
                     </label>
                     <input
                       type="number"
                       [id]="'ingredient-qty-' + i"
                       class="form-control"
                       formControlName="quantity"
-                      [step]="getQuantityStep(getIngredientGroup(i).controls.productId.value)"
-                      [placeholder]="getQuantityPlaceholder(getIngredientGroup(i).controls.productId.value)"
-                      [min]="getIngredientQuantityMin(getIngredientGroup(i).controls.productId.value)"
+                      [step]="getQuantityStep(getIngredientUnit(i))"
+                      [placeholder]="getQuantityPlaceholder(getIngredientUnit(i))"
+                      [min]="getQuantityMin(getIngredientUnit(i))"
+                      (input)="updateYieldFromIngredientTotal()"
                       [class.is-invalid]="
                         getIngredientGroup(i).controls.quantity.invalid &&
                         (getIngredientGroup(i).controls.quantity.touched || submitted)

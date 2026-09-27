@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { map } from 'rxjs';
 import { PaginationComponent } from 'src/app/theme/shared/components/pagination/pagination.component';
 import { ListToolbarComponent } from 'src/app/theme/shared/components/list-toolbar/list-toolbar.component';
@@ -52,12 +53,15 @@ import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialChar
     SortableHeaderComponent,
     ListToolbarComponent,
     TableIconActionComponent,
-    NoSpecialCharLabelPipe
+    NoSpecialCharLabelPipe,
+    NgSelectModule,
   ],
   templateUrl: './transaction-page.component.html',
   styleUrl: './transaction-page.component.scss',
 })
 export class TransactionPageComponent implements OnInit {
+  readonly TransactionType = TransactionType;
+
   private fb = inject(FormBuilder);
   private transactionService = inject(TransactionService);
   private inventoryService = inject(InventoryService);
@@ -77,6 +81,7 @@ export class TransactionPageComponent implements OnInit {
   transactionSortBy = signal<string | undefined>(undefined);
   transactionSortOrder = signal<SortOrder | undefined>(undefined);
   viewingTransactionId = signal<string | null>(null);
+  deletingTransactionId = signal<string | null>(null);
 
   saleDataResource = resource({
     loader: async () => {
@@ -104,8 +109,8 @@ export class TransactionPageComponent implements OnInit {
       this.transactionService.get(params).pipe(map((response) => response.data)),
   });
 
-  saleForm = this.fb.nonNullable.group({
-    batch: [''],
+  saleForm = this.fb.group({
+    batch: [null],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     remarks: [''],
   });
@@ -244,6 +249,36 @@ export class TransactionPageComponent implements OnInit {
       relativeTo: this.route,
       queryParams: { view: null },
       queryParamsHandling: 'merge',
+    });
+  }
+
+  deleteSaleTransaction(transaction: Transaction): void {
+    if (transaction.type !== TransactionType.SALE || this.deletingTransactionId()) {
+      return;
+    }
+
+    const productName = this.getTransactionProduct(transaction)?.name ?? 'this product';
+    const batchNumber = this.getTransactionBatch(transaction)?.batchNumber ?? 'its batch';
+    const confirmed = confirm(
+      `Delete this sale of ${this.getTransactionQuantity(transaction)} ${productName} from ${batchNumber}? The quantity will be restored to that batch.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingTransactionId.set(transaction._id);
+    this.transactionService.deleteSale(transaction._id).subscribe({
+      next: (response) => {
+        this.deletingTransactionId.set(null);
+        this.toastr.success(response.data.message, 'Sale deleted');
+        this.transactionListResource.reload();
+        this.saleDataResource.reload();
+      },
+      error: (error) => {
+        this.deletingTransactionId.set(null);
+        this.toastr.error(error.message ?? 'Failed to delete sale.', 'Error');
+      },
     });
   }
 

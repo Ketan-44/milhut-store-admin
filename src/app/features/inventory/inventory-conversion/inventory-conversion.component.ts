@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { Subscription } from 'rxjs';
 import { Product } from '../../products/models/product.model';
 import { ProductType } from '../../products/models/product-type.enum';
@@ -30,7 +31,7 @@ import {
 
 @Component({
   selector: 'app-inventory-conversion',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NgSelectModule],
   templateUrl: './inventory-conversion.component.html',
   styleUrl: './inventory-conversion.component.scss',
 })
@@ -55,17 +56,28 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
       ]);
 
       return {
-        rawBatches: batches.filter((batch) => {
-          if (batch.batchType !== BatchType.RAW || batch.remainingQuantity <= 0) {
-            return false;
-          }
+        rawBatches: batches
+          .filter((batch) => {
+            if (batch.batchType !== BatchType.RAW || batch.remainingQuantity <= 0) {
+              return false;
+            }
 
-          if (batch.expiryDate && new Date(batch.expiryDate).getTime() < Date.now()) {
-            return false;
-          }
+            if (batch.expiryDate && new Date(batch.expiryDate).getTime() < Date.now()) {
+              return false;
+            }
 
-          return true;
-        }),
+            return true;
+          })
+          .sort((first, second) => {
+            const firstReceivedAt = first.createdAt
+              ? Date.parse(first.createdAt)
+              : Number.POSITIVE_INFINITY;
+            const secondReceivedAt = second.createdAt
+              ? Date.parse(second.createdAt)
+              : Number.POSITIVE_INFINITY;
+
+            return firstReceivedAt - secondReceivedAt;
+          }),
         finishedProducts: products.filter(
           (product) =>
             product.isActive &&
@@ -78,7 +90,7 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
   });
 
   conversionForm = this.fb.nonNullable.group({
-    sourceBatchId: ['', Validators.required],
+    sourceBatchId: [null, Validators.required],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     finishedProductId: ['', Validators.required],
     expiryDate: ['', optionalExpiryDateValidators(this.minExpiryDate)],
@@ -197,7 +209,7 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
       return batch.batchNumber;
     }
 
-    return `${batch.batchNumber} — ${product.name} (${formatDisplayQuantity(batch.remainingQuantity, product.unit)})`;
+    return `${product.name} — ${batch.batchNumber} (${formatDisplayQuantity(batch.remainingQuantity, product.unit)})`;
   }
 
   onSubmit(): void {
@@ -239,9 +251,7 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
           `Conversion completed. New batch: ${response.data.producedBatch.batch.batchNumber}`,
           'Success',
         );
-        this.router.navigate(['/inventory'], {
-          queryParams: { search: response.data.producedBatch.batch.batchNumber },
-        });
+        this.router.navigate(['/production']);
       },
       error: (error) => {
         this.saving = false;
