@@ -51,7 +51,7 @@
               </th>
               <th>
                 <app-sortable-header
-                  label="Finished Product"
+                  label="Output"
                   column="finishedProductId"
                   [sortBy]="recipeSortBy()"
                   [sortOrder]="recipeSortOrder()"
@@ -66,16 +66,18 @@
             @for (recipe of recipes; track recipe._id) {
               <tr>
                 <td>{{ recipe.name }}</td>
-                <td>{{ getProductName(recipe.finishedProductId) | titlecase }}</td>
+                <td>{{ getRecipeOutputLabel(recipe) | titlecase }}</td>
                 <td>{{ getIngredientDisplay(recipe) }}</td>
                 <td class="text-end">
                   <div class="table-action-group">
-                    <app-table-icon-action
-                      icon="play-circle"
-                      title="Run production"
-                      variant="primary"
-                      (actionClick)="runProductionForRecipe(recipe._id)"
-                    />
+                    @if (getRecipeKind(recipe) === 'PRODUCT') {
+                      <app-table-icon-action
+                        icon="play-circle"
+                        title="Run production"
+                        variant="primary"
+                        (actionClick)="runProductionForRecipe(recipe._id)"
+                      />
+                    }
                     <app-table-icon-action
                       icon="edit"
                       title="Edit recipe"
@@ -128,7 +130,7 @@
               [clearable]="false"
               [class.is-invalid]="f.recipeId.invalid && (f.recipeId.touched || submitted)"
             >
-              @for (recipe of allRecipes; track recipe._id) {
+              @for (recipe of runnableRecipes; track recipe._id) {
                 <ng-option [value]="recipe._id">
                   {{ recipe.name }} — {{ getProductName(recipe.finishedProductId) | titlecase }}
                 </ng-option>
@@ -145,11 +147,11 @@
               <div class="fw-semibold mb-2">Recipe ingredients (per 1 output unit)</div>
               @if (selectedRecipe.ingredients?.length) {
                 <ul class="mb-0 ps-3">
-                  @for (ingredient of selectedRecipe.ingredients; track ingredient.productId) {
+                  @for (ingredient of selectedRecipe.ingredients; track ingredient.recipeId ?? ingredient.productId) {
                     <li>
-                      {{ getProductName(ingredient.productId) | titlecase }} —
+                      {{ getIngredientName(ingredient) | titlecase }} —
                       {{ ingredient.quantity }}
-                      {{ getIngredientUnitLabel(ingredient.productId) }}
+                      {{ getIngredientUnit(ingredient) }}
                     </li>
                   }
                 </ul>
