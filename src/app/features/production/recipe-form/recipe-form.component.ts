@@ -11,6 +11,7 @@ import {
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { resource } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { firstValueFrom } from 'rxjs';
 import { Product } from '../../products/models/product.model';
 import { ProductType } from '../../products/models/product-type.enum';
@@ -34,7 +35,7 @@ type IngredientFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-recipe-form',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe, NgSelectModule],
   templateUrl: './recipe-form.component.html',
   styleUrl: './recipe-form.component.scss',
 })
@@ -88,9 +89,9 @@ export class RecipeFormComponent implements OnInit {
     },
   });
 
-  recipeForm = this.fb.nonNullable.group({
+  recipeForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
-    finishedProductId: ['', Validators.required],
+    finishedProductId: this.fb.control<string | null>(null, Validators.required),
     ingredients: this.fb.array([this.createIngredientGroup()]),
   });
 

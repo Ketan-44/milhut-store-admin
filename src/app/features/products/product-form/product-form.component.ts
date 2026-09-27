@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProductType } from '../models/product-type.enum';
@@ -21,7 +22,7 @@ import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialChar
 
 @Component({
   selector: 'app-product-form',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe, NgSelectModule],
   templateUrl: './product-form.component.html',
   styleUrl: './product-form.component.scss',
 })

@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { Subscription } from 'rxjs';
 import { Product } from '../../products/models/product.model';
 import { ProductType } from '../../products/models/product-type.enum';
@@ -30,7 +31,7 @@ import {
 
 @Component({
   selector: 'app-inventory-conversion',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NgSelectModule],
   templateUrl: './inventory-conversion.component.html',
   styleUrl: './inventory-conversion.component.scss',
 })
@@ -78,7 +79,7 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
   });
 
   conversionForm = this.fb.nonNullable.group({
-    sourceBatchId: ['', Validators.required],
+    sourceBatchId: [null, Validators.required],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     finishedProductId: ['', Validators.required],
     expiryDate: ['', optionalExpiryDateValidators(this.minExpiryDate)],
@@ -197,7 +198,7 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
       return batch.batchNumber;
     }
 
-    return `${batch.batchNumber} — ${product.name} (${formatDisplayQuantity(batch.remainingQuantity, product.unit)})`;
+    return `${product.name} — ${batch.batchNumber} (${formatDisplayQuantity(batch.remainingQuantity, product.unit)})`;
   }
 
   onSubmit(): void {

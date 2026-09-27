@@ -116,22 +116,24 @@
         <form [formGroup]="productionForm" (ngSubmit)="onSubmitProduction()">
           <div class="form-group mb-3">
             <label class="form-label" for="recipeId">Recipe</label>
-            <select
+            <ng-select
               id="recipeId"
-              class="form-select"
+              labelForId="recipeId"
               formControlName="recipeId"
+              placeholder="Select recipe"
+              [searchable]="true"
+              [clearable]="false"
               [class.is-invalid]="f.recipeId.invalid && (f.recipeId.touched || submitted)"
             >
-              <option value="" disabled>Select recipe</option>
               @for (recipe of allRecipes; track recipe._id) {
-                <option [value]="recipe._id">
+                <ng-option [value]="recipe._id">
                   {{ recipe.name }} — {{ getProductName(recipe.finishedProductId) | titlecase }}
-                </option>
+                </ng-option>
               }
-            </select>
+            </ng-select>
 
             @if (f.recipeId.invalid && (f.recipeId.touched || submitted)) {
-              <div class="invalid-feedback">Recipe is required.</div>
+              <div class="invalid-feedback d-block">Recipe is required.</div>
             }
           </div>
 

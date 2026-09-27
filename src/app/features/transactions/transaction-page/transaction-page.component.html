@@ -136,20 +136,22 @@
         <form [formGroup]="saleForm" (ngSubmit)="onSubmitSale()">
           <div class="form-group mb-3">
             <label class="form-label" for="batch">Batch</label>
-            <select
+            <ng-select
               id="batch"
-              class="form-select"
+              labelForId="batch"
               formControlName="batch"
               (change)="onBatchChange()"
+              placeholder="Select batch"
+              [searchable]="true"
+              [clearable]="false"
               [class.is-invalid]="submitted && !f.batch.value"
             >
-              <option value="" disabled>Select batch</option>
               @for (batch of availableBatches; track batch._id) {
-                <option [value]="batch._id">
-                  {{ batch.batchNumber }} — {{ products.get(batch.productId)?.name | titlecase }}
-                </option>
+                <ng-option [value]="batch._id">
+                  {{ products.get(batch.productId)?.name | titlecase }} — {{ batch.batchNumber }}
+                </ng-option>
               }
-            </select>
+            </ng-select>
 
             @if (submitted && !f.batch.value) {
               <div class="invalid-feedback d-block">Batch is required.</div>

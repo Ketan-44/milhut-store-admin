@@ -25,6 +25,7 @@
         <table class="table table-hover mb-0 inventory-table">
           <thead>
             <tr>
+              <th class="col-product">Product</th>
               <th class="col-batch-no">
                 <app-sortable-header
                   label="Batch No."
@@ -34,7 +35,6 @@
                   (sortClick)="onSort($event)"
                 />
               </th>
-              <th class="col-product">Product</th>
               <th class="col-type">
                 <app-sortable-header
                   label="Type"
@@ -87,10 +87,10 @@
           <tbody>
             @for (batch of inventoryResource.value()?.items ?? []; track batch._id) {
               <tr>
-                <td>{{ batch.batchNumber | noSpecialCharLabel: true}}</td>
                 <td>
                   {{ getProductName(batch.productId, products) | titlecase }}
                 </td>
+                <td>{{ batch.batchNumber | noSpecialCharLabel: true}}</td>
                 <td>{{ batch.batchType | noSpecialCharLabel | titlecase }}</td>
                 <td>
                   {{

@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { firstValueFrom } from 'rxjs';
 import { PaginationComponent } from 'src/app/theme/shared/components/pagination/pagination.component';
 import { SortableHeaderComponent } from 'src/app/theme/shared/components/sortable-header/sortable-header.component';
@@ -32,7 +33,7 @@ import {
 
 @Component({
   selector: 'app-production-page',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, PaginationComponent, SortableHeaderComponent, TableIconActionComponent],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, PaginationComponent, SortableHeaderComponent, TableIconActionComponent, NgSelectModule],
   providers: [TitleCasePipe],
   templateUrl: './production-page.component.html',
   styleUrl: './production-page.component.scss',
@@ -81,9 +82,12 @@ export class ProductionPageComponent {
     },
   });
 
-  productionForm = this.fb.nonNullable.group({
-    recipeId: ['', Validators.required],
-    outputQuantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
+  productionForm = this.fb.group({
+    recipeId: this.fb.control<string | null>(null, Validators.required),
+    outputQuantity: this.fb.control<number | null>(
+      null,
+      [Validators.required, Validators.min(0.001)]
+    ),
     expiryDate: ['', expiryDateValidators(this.minExpiryDate)],
     remarks: [''],
   });

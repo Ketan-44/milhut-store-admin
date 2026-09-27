@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { map } from 'rxjs';
 import { PaginationComponent } from 'src/app/theme/shared/components/pagination/pagination.component';
 import { ListToolbarComponent } from 'src/app/theme/shared/components/list-toolbar/list-toolbar.component';
@@ -52,7 +53,8 @@ import { NoSpecialCharLabelPipe } from 'src/app/theme/shared/pipes/noSpecialChar
     SortableHeaderComponent,
     ListToolbarComponent,
     TableIconActionComponent,
-    NoSpecialCharLabelPipe
+    NoSpecialCharLabelPipe,
+    NgSelectModule,
   ],
   templateUrl: './transaction-page.component.html',
   styleUrl: './transaction-page.component.scss',
@@ -104,8 +106,8 @@ export class TransactionPageComponent implements OnInit {
       this.transactionService.get(params).pipe(map((response) => response.data)),
   });
 
-  saleForm = this.fb.nonNullable.group({
-    batch: [''],
+  saleForm = this.fb.group({
+    batch: [null],
     quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
     remarks: [''],
   });

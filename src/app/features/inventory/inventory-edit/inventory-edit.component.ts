@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { BatchLookup } from '../models/inventory.model';
 import { InventoryService } from '../services/inventory.service';
@@ -32,7 +33,7 @@ type BatchFormData = {
 
 @Component({
   selector: 'app-inventory-edit',
-  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe],
+  imports: [RouterModule, ReactiveFormsModule, TitleCasePipe, NoSpecialCharLabelPipe, NgSelectModule],
   templateUrl: './inventory-edit.component.html',
   styleUrl: './inventory-edit.component.scss',
 })
@@ -90,10 +91,13 @@ export class InventoryEditComponent implements OnInit, OnDestroy {
   formReady = signal(false);
   readonly minExpiryDate = getTodayDateString();
 
-  inventoryForm = this.fb.nonNullable.group({
+  inventoryForm = this.fb.group({
     batchNumber: [''],
-    productId: ['', Validators.required],
-    quantity: [null as number | null, [Validators.required, Validators.min(0.001)]],
+    productId: this.fb.control<string | null>(null, Validators.required),
+    quantity: this.fb.control<number | null>(
+      null,
+      [Validators.required, Validators.min(0.001)]
+    ),
     expiryDate: ['', optionalExpiryDateValidators(this.minExpiryDate)],
     sourceName: ['', Validators.maxLength(200)],
   });

@@ -12,16 +12,16 @@
 
   <div class="list-toolbar-limit">
     <label class="list-toolbar-limit-label" [attr.for]="limitSelectId">Show</label>
-    <select
-      [id]="limitSelectId"
-      class="form-select form-select-sm list-toolbar-limit-select"
+    <ng-select
+      [labelForId]="limitSelectId"
+      class="list-toolbar-limit-select"
+      [items]="limitOptions()"
       [ngModel]="limit()"
       (ngModelChange)="onLimitChange($event)"
+      [searchable]="false"
+      [clearable]="false"
     >
-      @for (option of limitOptions(); track option) {
-        <option [ngValue]="option">{{ option }}</option>
-      }
-    </select>
+    </ng-select>
     <span class="list-toolbar-limit-label">entries</span>
   </div>
 </div>

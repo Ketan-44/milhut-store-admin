@@ -37,22 +37,24 @@
 
           <div class="form-group mb-3">
             <label class="form-label" for="finishedProductId">Finished Product</label>
-            <select
+            <ng-select
               id="finishedProductId"
-              class="form-select"
+              labelForId="finishedProductId"
               formControlName="finishedProductId"
+              placeholder="Select finished product"
+              [searchable]="true"
+              [clearable]="false"
               [class.is-invalid]="f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)"
             >
-              <option value="" disabled>Select finished product</option>
               @for (product of finishedProducts; track product._id) {
-                <option [value]="product._id">
+                <ng-option [value]="product._id">
                   {{ product.name | titlecase }} ({{ product.unit | titlecase }})
-                </option>
+                </ng-option>
               }
-            </select>
+            </ng-select>
 
             @if (f.finishedProductId.invalid && (f.finishedProductId.touched || submitted)) {
-              <div class="invalid-feedback">Finished product is required.</div>
+              <div class="invalid-feedback d-block">Finished product is required.</div>
             }
 
             @if (finishedProducts.length === 0) {
@@ -75,22 +77,24 @@
                 <div class="row g-2 mb-2 align-items-end" [formGroupName]="i">
                   <div class="col-md-6">
                     <label class="form-label" [for]="'ingredient-product-' + i">Product</label>
-                    <select
+                    <ng-select
                       [id]="'ingredient-product-' + i"
-                      class="form-select"
+                      [labelForId]="'ingredient-product-' + i"
                       formControlName="productId"
+                      placeholder="Select ingredient"
+                      [searchable]="true"
+                      [clearable]="false"
                       [class.is-invalid]="
                         getIngredientGroup(i).controls.productId.invalid &&
                         (getIngredientGroup(i).controls.productId.touched || submitted)
                       "
                     >
-                      <option value="" disabled>Select ingredient</option>
                       @for (product of ingredientProducts; track product._id) {
-                        <option [value]="product._id">
+                        <ng-option [value]="product._id">
                           {{ product.name | titlecase }} ({{ product.type | noSpecialCharLabel | titlecase }} / {{ product.unit | titlecase }})
-                        </option>
+                        </ng-option>
                       }
-                    </select>
+                    </ng-select>
                   </div>
 
                   <div class="col-md-4">
