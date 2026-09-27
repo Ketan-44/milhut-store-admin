@@ -103,6 +103,15 @@
                     variant="primary"
                     (actionClick)="viewTransaction(transaction._id)"
                   />
+                  @if (transaction.type === TransactionType.SALE) {
+                    <app-table-icon-action
+                      icon="delete"
+                      title="Delete sale and restore stock"
+                      variant="danger"
+                      [disabled]="deletingTransactionId() === transaction._id"
+                      (actionClick)="deleteSaleTransaction(transaction)"
+                    />
+                  }
                 </td>
               </tr>
             } @empty {
