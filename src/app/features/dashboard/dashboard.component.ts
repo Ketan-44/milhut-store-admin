@@ -84,6 +84,7 @@ export class DashboardComponent {
   endDate = signal(getTodayDateString());
   livePage = signal(1);
   liveLimit = signal(DEFAULT_PAGE_LIMIT);
+  expiringPage = signal(1);
   purchasedPage = signal(1);
   productionPage = signal(1);
   salesPage = signal(1);
@@ -114,6 +115,14 @@ export class DashboardComponent {
     }),
     stream: ({ params }) =>
       this.dashboardService.getLiveInventory(params).pipe(map((response) => response.data)),
+  });
+
+  expiringInventoryResource = rxResource({
+    params: () => ({ page: this.expiringPage(), limit: 5, days: 30 }),
+    stream: ({ params }) =>
+      this.dashboardService
+        .getExpiringInventory(params)
+        .pipe(map((response) => response.data)),
   });
 
   statsResource = resource({
@@ -245,6 +254,10 @@ export class DashboardComponent {
     this.livePage.set(page);
   }
 
+  onExpiringPageChange(page: number): void {
+    this.expiringPage.set(page);
+  }
+
   onLiveSearchChange(value: string): void {
     this.liveDebouncedSearch.searchInput.set(value);
     this.livePage.set(1);
@@ -373,6 +386,13 @@ export class DashboardComponent {
     unit: ProductUnit;
   }): string {
     return `${item.displayAvailableQuantity} ${getUnitDisplayLabel(item.unit)}`;
+  }
+
+  getExpiringQuantityLabel(item: {
+    displayRemainingQuantity: number;
+    unit: ProductUnit;
+  }): string {
+    return `${item.displayRemainingQuantity} ${getUnitDisplayLabel(item.unit)}`;
   }
 
   getMinimumQuantityLabel(item: {

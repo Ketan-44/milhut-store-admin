@@ -9,6 +9,8 @@ import {
   DashboardDateRangeQuery,
   DashboardProductionQuery,
   DashboardStatsResult,
+  ExpiringInventoryQuery,
+  ExpiringInventoryResult,
   LiveInventoryResult,
 } from '../models/dashboard.model';
 
@@ -19,6 +21,13 @@ export class DashboardService {
   getLiveInventory(query: PaginationQuery = {}) {
     return this.http.get<ApiResponse<LiveInventoryResult>>(
       `${environment.apiUrl}/dashboard/live-inventory`,
+      { params: this.buildParams(query) },
+    );
+  }
+
+  getExpiringInventory(query: ExpiringInventoryQuery = {}) {
+    return this.http.get<ApiResponse<ExpiringInventoryResult>>(
+      `${environment.apiUrl}/dashboard/expiring-inventory`,
       { params: this.buildParams(query) },
     );
   }
@@ -55,6 +64,7 @@ export class DashboardService {
     query: (PaginationQuery | DashboardDateRangeQuery) & {
       productId?: string;
       sourceBatchId?: string;
+      days?: number;
     },
   ): HttpParams {
     let params = new HttpParams();
@@ -73,6 +83,10 @@ export class DashboardService {
 
     if ('sourceBatchId' in query && query.sourceBatchId) {
       params = params.set('sourceBatchId', query.sourceBatchId);
+    }
+
+    if ('days' in query && query.days) {
+      params = params.set('days', query.days);
     }
 
     return appendPaginationParams(params, query);
