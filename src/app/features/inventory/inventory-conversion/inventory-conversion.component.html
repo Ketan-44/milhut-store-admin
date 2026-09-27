@@ -1,7 +1,7 @@
 <div class="col-md-12">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0">Batch Conversion</h5>
-    <a routerLink="/inventory" class="btn btn-outline-secondary btn-sm">Back to List</a>
+    <a routerLink="/production" class="btn btn-outline-secondary btn-sm">Back to Production</a>
   </div>
 
   <div class="card">
@@ -29,9 +29,12 @@
               [class.is-invalid]="f.sourceBatchId.invalid && (f.sourceBatchId.touched || submitted)"
             >
               @for (batch of rawBatches; track batch._id) {
-                <ng-option [value]="batch._id">{{ getRawBatchLabel(batch) }}</ng-option>
+                <ng-option [value]="batch._id">
+                  {{ getRawBatchLabel(batch) }}
+                </ng-option>
               }
             </ng-select>
+            <small class="text-muted d-block mt-1">Oldest batches appear first.</small>
 
             @if (f.sourceBatchId.invalid && (f.sourceBatchId.touched || submitted)) {
               <div class="invalid-feedback d-block">RAW batch is required.</div>
@@ -179,7 +182,7 @@
             >
               {{ saving ? 'Converting...' : 'Convert Batch' }}
             </button>
-            <a routerLink="/inventory" class="btn btn-outline-secondary">Cancel</a>
+            <a routerLink="/production" class="btn btn-outline-secondary">Cancel</a>
           </div>
         </form>
       }

@@ -56,17 +56,28 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
       ]);
 
       return {
-        rawBatches: batches.filter((batch) => {
-          if (batch.batchType !== BatchType.RAW || batch.remainingQuantity <= 0) {
-            return false;
-          }
+        rawBatches: batches
+          .filter((batch) => {
+            if (batch.batchType !== BatchType.RAW || batch.remainingQuantity <= 0) {
+              return false;
+            }
 
-          if (batch.expiryDate && new Date(batch.expiryDate).getTime() < Date.now()) {
-            return false;
-          }
+            if (batch.expiryDate && new Date(batch.expiryDate).getTime() < Date.now()) {
+              return false;
+            }
 
-          return true;
-        }),
+            return true;
+          })
+          .sort((first, second) => {
+            const firstReceivedAt = first.createdAt
+              ? Date.parse(first.createdAt)
+              : Number.POSITIVE_INFINITY;
+            const secondReceivedAt = second.createdAt
+              ? Date.parse(second.createdAt)
+              : Number.POSITIVE_INFINITY;
+
+            return firstReceivedAt - secondReceivedAt;
+          }),
         finishedProducts: products.filter(
           (product) =>
             product.isActive &&
@@ -240,9 +251,7 @@ export class InventoryConversionComponent implements OnInit, OnDestroy {
           `Conversion completed. New batch: ${response.data.producedBatch.batch.batchNumber}`,
           'Success',
         );
-        this.router.navigate(['/inventory'], {
-          queryParams: { search: response.data.producedBatch.batch.batchNumber },
-        });
+        this.router.navigate(['/production']);
       },
       error: (error) => {
         this.saving = false;
