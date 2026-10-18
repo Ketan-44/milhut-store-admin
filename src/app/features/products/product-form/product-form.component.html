@@ -69,7 +69,7 @@
             >
               @for (unit of productUnits; track unit) {
                 <ng-option [value]="unit">
-                  {{ unit | titlecase }}{{ unit === 'WEIGHT' ? ' (kg)' : '' }}
+                  {{ unit === 'WEIGHT' ? 'Weight (kg)' : unit === 'GMS' ? 'GMS (gms)' : (unit | titlecase) }}
                 </ng-option>
               }
             </ng-select>
